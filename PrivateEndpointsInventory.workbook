@@ -1,0 +1,609 @@
+{
+  "version": "Notebook/1.0",
+  "items": [
+    {
+      "type": 1,
+      "content": {
+        "json": "## Private Endpoints Inventory\n---\n\nThis workbook provides a comprehensive inventory of Private Endpoints across subscriptions and tenants, including:\n- Private Endpoint details and status\n- Associated resources and connections\n- Cross-subscription and cross-tenant visibility\n- Network interface and IP configuration details"
+      },
+      "name": "text - title"
+    },
+    {
+      "type": 9,
+      "content": {
+        "version": "KqlParameterItem/1.0",
+        "parameters": [
+          {
+            "id": "1f74ed9a-e3ed-498d-bd5b-f68f3836a117",
+            "version": "KqlParameterItem/1.0",
+            "name": "Subscriptions",
+            "type": 6,
+            "isRequired": true,
+            "multiSelect": true,
+            "quote": "'",
+            "delimiter": ",",
+            "typeSettings": {
+              "additionalResourceOptions": [
+                "value::all"
+              ],
+              "includeAll": true,
+              "showDefault": false
+            },
+            "timeContext": {
+              "durationMs": 86400000
+            },
+            "defaultValue": "value::all",
+            "value": [
+              "value::all"
+            ]
+          },
+          {
+            "id": "8c4e5f32-3b2d-4d8f-9e5c-7a6b8c9d0e1f",
+            "version": "KqlParameterItem/1.0",
+            "name": "ResourceGroups",
+            "type": 2,
+            "isRequired": false,
+            "multiSelect": true,
+            "quote": "'",
+            "delimiter": ",",
+            "query": "resources\n| where type =~ 'microsoft.network/privateendpoints'\n| summarize by resourceGroup\n| order by resourceGroup asc\n| project value = resourceGroup, label = resourceGroup, selected = false",
+            "crossComponentResources": [
+              "{Subscriptions}"
+            ],
+            "typeSettings": {
+              "additionalResourceOptions": [
+                "value::all"
+              ],
+              "showDefault": false
+            },
+            "timeContext": {
+              "durationMs": 86400000
+            },
+            "defaultValue": "value::all",
+            "queryType": 1,
+            "resourceType": "microsoft.resourcegraph/resources",
+            "value": [
+              "value::all"
+            ]
+          },
+          {
+            "id": "2d5e6f7a-8b9c-4d0e-1f2a-3b4c5d6e7f8a",
+            "version": "KqlParameterItem/1.0",
+            "name": "TimeRange",
+            "type": 4,
+            "isRequired": false,
+            "typeSettings": {
+              "selectableValues": [
+                {
+                  "durationMs": 3600000
+                },
+                {
+                  "durationMs": 14400000
+                },
+                {
+                  "durationMs": 43200000
+                },
+                {
+                  "durationMs": 86400000
+                },
+                {
+                  "durationMs": 172800000
+                },
+                {
+                  "durationMs": 259200000
+                },
+                {
+                  "durationMs": 604800000
+                },
+                {
+                  "durationMs": 1209600000
+                },
+                {
+                  "durationMs": 2419200000
+                },
+                {
+                  "durationMs": 2592000000
+                }
+              ],
+              "allowCustom": true
+            },
+            "timeContext": {
+              "durationMs": 86400000
+            },
+            "value": {
+              "durationMs": 2592000000
+            }
+          }
+        ],
+        "style": "pills",
+        "queryType": 0,
+        "resourceType": "microsoft.operationalinsights/workspaces"
+      },
+      "name": "parameters - filters"
+    },
+    {
+      "type": 1,
+      "content": {
+        "json": "### Overview Statistics"
+      },
+      "name": "text - overview header"
+    },
+    {
+      "type": 3,
+      "content": {
+        "version": "KqlItem/1.0",
+        "query": "resources\n| where type =~ 'microsoft.network/privateendpoints'\n| where '*' in ({ResourceGroups}) or resourceGroup in ({ResourceGroups})\n| summarize TotalCount = count()\n| extend MetricName = 'Total Private Endpoints'\n| project MetricName, Value = TotalCount",
+        "size": 4,
+        "title": "Total Private Endpoints",
+        "queryType": 1,
+        "resourceType": "microsoft.resourcegraph/resources",
+        "crossComponentResources": [
+          "{Subscriptions}"
+        ],
+        "visualization": "tiles",
+        "tileSettings": {
+          "titleContent": {
+            "columnMatch": "MetricName",
+            "formatter": 1
+          },
+          "leftContent": {
+            "columnMatch": "Value",
+            "formatter": 12,
+            "formatOptions": {
+              "palette": "blue"
+            }
+          },
+          "showBorder": true
+        }
+      },
+      "customWidth": "33",
+      "name": "query - total count"
+    },
+    {
+      "type": 3,
+      "content": {
+        "version": "KqlItem/1.0",
+        "query": "resources\n| where type =~ 'microsoft.network/privateendpoints'\n| where '*' in ({ResourceGroups}) or resourceGroup in ({ResourceGroups})\n| summarize SubscriptionCount = dcount(subscriptionId)\n| extend MetricName = 'Subscriptions'\n| project MetricName, Value = SubscriptionCount",
+        "size": 4,
+        "title": "Subscriptions with Private Endpoints",
+        "queryType": 1,
+        "resourceType": "microsoft.resourcegraph/resources",
+        "crossComponentResources": [
+          "{Subscriptions}"
+        ],
+        "visualization": "tiles",
+        "tileSettings": {
+          "titleContent": {
+            "columnMatch": "MetricName",
+            "formatter": 1
+          },
+          "leftContent": {
+            "columnMatch": "Value",
+            "formatter": 12,
+            "formatOptions": {
+              "palette": "green"
+            }
+          },
+          "showBorder": true
+        }
+      },
+      "customWidth": "33",
+      "name": "query - subscription count"
+    },
+    {
+      "type": 3,
+      "content": {
+        "version": "KqlItem/1.0",
+        "query": "resources\n| where type =~ 'microsoft.network/privateendpoints'\n| where '*' in ({ResourceGroups}) or resourceGroup in ({ResourceGroups})\n| summarize ResourceGroupCount = dcount(resourceGroup)\n| extend MetricName = 'Resource Groups'\n| project MetricName, Value = ResourceGroupCount",
+        "size": 4,
+        "title": "Resource Groups with Private Endpoints",
+        "queryType": 1,
+        "resourceType": "microsoft.resourcegraph/resources",
+        "crossComponentResources": [
+          "{Subscriptions}"
+        ],
+        "visualization": "tiles",
+        "tileSettings": {
+          "titleContent": {
+            "columnMatch": "MetricName",
+            "formatter": 1
+          },
+          "leftContent": {
+            "columnMatch": "Value",
+            "formatter": 12,
+            "formatOptions": {
+              "palette": "orange"
+            }
+          },
+          "showBorder": true
+        }
+      },
+      "customWidth": "33",
+      "name": "query - resource group count"
+    },
+    {
+      "type": 1,
+      "content": {
+        "json": "### Private Endpoints by Location and Connection State"
+      },
+      "name": "text - distribution header"
+    },
+    {
+      "type": 3,
+      "content": {
+        "version": "KqlItem/1.0",
+        "query": "resources\n| where type =~ 'microsoft.network/privateendpoints'\n| where '*' in ({ResourceGroups}) or resourceGroup in ({ResourceGroups})\n| summarize Count = count() by location\n| order by Count desc\n| project Location = location, ['Private Endpoints'] = Count",
+        "size": 0,
+        "title": "Private Endpoints by Location",
+        "queryType": 1,
+        "resourceType": "microsoft.resourcegraph/resources",
+        "crossComponentResources": [
+          "{Subscriptions}"
+        ],
+        "visualization": "piechart"
+      },
+      "customWidth": "50",
+      "name": "query - by location"
+    },
+    {
+      "type": 3,
+      "content": {
+        "version": "KqlItem/1.0",
+        "query": "resources\n| where type =~ 'microsoft.network/privateendpoints'\n| where '*' in ({ResourceGroups}) or resourceGroup in ({ResourceGroups})\n| mv-expand privateLinkServiceConnections = properties.privateLinkServiceConnections\n| extend connectionState = tostring(privateLinkServiceConnections.properties.privateLinkServiceConnectionState.status)\n| summarize Count = count() by connectionState\n| extend connectionState = iff(connectionState == '', 'Not Specified', connectionState)\n| order by Count desc\n| project ['Connection State'] = connectionState, Count",
+        "size": 0,
+        "title": "Private Endpoints by Connection State",
+        "queryType": 1,
+        "resourceType": "microsoft.resourcegraph/resources",
+        "crossComponentResources": [
+          "{Subscriptions}"
+        ],
+        "visualization": "piechart"
+      },
+      "customWidth": "50",
+      "name": "query - by connection state"
+    },
+    {
+      "type": 1,
+      "content": {
+        "json": "### Detailed Private Endpoints Inventory"
+      },
+      "name": "text - detailed inventory header"
+    },
+    {
+      "type": 3,
+      "content": {
+        "version": "KqlItem/1.0",
+        "query": "resources\n| where type =~ 'microsoft.network/privateendpoints'\n| where '*' in ({ResourceGroups}) or resourceGroup in ({ResourceGroups})\n| extend tenantId = tostring(tenantId)\n| extend subscriptionId = tostring(subscriptionId)\n| extend privateEndpointName = name\n| extend subnet = tostring(properties.subnet.id)\n| extend subnetName = tostring(split(subnet, '/')[-1])\n| extend vnetName = tostring(split(subnet, '/')[-3])\n| extend networkInterfaces = properties.networkInterfaces\n| mv-expand networkInterface = networkInterfaces\n| extend nicId = tostring(networkInterface.id)\n| extend nicName = tostring(split(nicId, '/')[-1])\n| mv-expand privateLinkServiceConnection = properties.privateLinkServiceConnections\n| extend connectionName = tostring(privateLinkServiceConnection.properties.privateLinkServiceConnectionState.status)\n| extend targetResourceId = tostring(privateLinkServiceConnection.properties.privateLinkServiceId)\n| extend targetResourceName = tostring(split(targetResourceId, '/')[-1])\n| extend targetResourceType = tostring(split(targetResourceId, '/')[-2])\n| extend groupIds = tostring(privateLinkServiceConnection.properties.groupIds[0])\n| project \n    TenantId = tenantId,\n    SubscriptionId = subscriptionId,\n    ['Private Endpoint'] = privateEndpointName,\n    ['Resource Group'] = resourceGroup,\n    Location = location,\n    ['Connection State'] = connectionName,\n    ['Target Resource Name'] = targetResourceName,\n    ['Target Resource Type'] = targetResourceType,\n    ['Sub Resource (Group ID)'] = groupIds,\n    ['Virtual Network'] = vnetName,\n    Subnet = subnetName,\n    ['Network Interface'] = nicName,\n    ['Target Resource ID'] = targetResourceId,\n    ['Private Endpoint ID'] = id\n| order by ['Private Endpoint'] asc",
+        "size": 0,
+        "title": "Private Endpoints Detailed List",
+        "exportFieldName": "Private Endpoint ID",
+        "exportParameterName": "SelectedPrivateEndpoint",
+        "exportDefaultValue": "none",
+        "queryType": 1,
+        "resourceType": "microsoft.resourcegraph/resources",
+        "crossComponentResources": [
+          "{Subscriptions}"
+        ],
+        "gridSettings": {
+          "formatters": [
+            {
+              "columnMatch": "TenantId",
+              "formatter": 0,
+              "formatOptions": {
+                "customColumnWidthSetting": "35ch"
+              }
+            },
+            {
+              "columnMatch": "SubscriptionId",
+              "formatter": 0,
+              "formatOptions": {
+                "customColumnWidthSetting": "35ch"
+              }
+            },
+            {
+              "columnMatch": "Private Endpoint",
+              "formatter": 1,
+              "formatOptions": {
+                "linkTarget": "Resource",
+                "customColumnWidthSetting": "25ch"
+              }
+            },
+            {
+              "columnMatch": "Connection State",
+              "formatter": 18,
+              "formatOptions": {
+                "thresholdsOptions": "icons",
+                "thresholdsGrid": [
+                  {
+                    "operator": "==",
+                    "thresholdValue": "Approved",
+                    "representation": "success",
+                    "text": "{0}{1}"
+                  },
+                  {
+                    "operator": "==",
+                    "thresholdValue": "Pending",
+                    "representation": "pending",
+                    "text": "{0}{1}"
+                  },
+                  {
+                    "operator": "==",
+                    "thresholdValue": "Rejected",
+                    "representation": "failed",
+                    "text": "{0}{1}"
+                  },
+                  {
+                    "operator": "Default",
+                    "thresholdValue": null,
+                    "representation": "unknown",
+                    "text": "{0}{1}"
+                  }
+                ]
+              }
+            },
+            {
+              "columnMatch": "Target Resource Name",
+              "formatter": 1,
+              "formatOptions": {
+                "linkTarget": "Resource",
+                "linkIsContextBlade": true,
+                "customColumnWidthSetting": "25ch"
+              },
+              "tooltipFormat": {
+                "tooltip": "Click to view target resource"
+              }
+            },
+            {
+              "columnMatch": "Target Resource ID",
+              "formatter": 5
+            },
+            {
+              "columnMatch": "Private Endpoint ID",
+              "formatter": 5
+            }
+          ],
+          "filter": true,
+          "sortBy": [
+            {
+              "itemKey": "Private Endpoint",
+              "sortOrder": 1
+            }
+          ],
+          "labelSettings": []
+        },
+        "sortBy": [
+          {
+            "itemKey": "Private Endpoint",
+            "sortOrder": 1
+          }
+        ]
+      },
+      "name": "query - detailed inventory"
+    },
+    {
+      "type": 1,
+      "content": {
+        "json": "### Private Endpoints by Target Resource Type"
+      },
+      "name": "text - by resource type header"
+    },
+    {
+      "type": 3,
+      "content": {
+        "version": "KqlItem/1.0",
+        "query": "resources\n| where type =~ 'microsoft.network/privateendpoints'\n| where '*' in ({ResourceGroups}) or resourceGroup in ({ResourceGroups})\n| mv-expand privateLinkServiceConnection = properties.privateLinkServiceConnections\n| extend targetResourceId = tostring(privateLinkServiceConnection.properties.privateLinkServiceId)\n| extend targetResourceType = tostring(split(targetResourceId, '/')[-2])\n| extend provider = tostring(split(targetResourceId, '/')[6])\n| extend fullResourceType = strcat(provider, '/', targetResourceType)\n| summarize Count = count() by fullResourceType\n| order by Count desc\n| project ['Target Resource Type'] = fullResourceType, ['Number of Private Endpoints'] = Count",
+        "size": 0,
+        "title": "Private Endpoints by Target Resource Type",
+        "queryType": 1,
+        "resourceType": "microsoft.resourcegraph/resources",
+        "crossComponentResources": [
+          "{Subscriptions}"
+        ],
+        "visualization": "barchart"
+      },
+      "name": "query - by resource type"
+    },
+    {
+      "type": 1,
+      "content": {
+        "json": "### Cross-Subscription and Cross-Tenant Analysis"
+      },
+      "name": "text - cross subscription header"
+    },
+    {
+      "type": 3,
+      "content": {
+        "version": "KqlItem/1.0",
+        "query": "resources\n| where type =~ 'microsoft.network/privateendpoints'\n| where '*' in ({ResourceGroups}) or resourceGroup in ({ResourceGroups})\n| extend peSubscriptionId = tostring(subscriptionId)\n| extend peTenantId = tostring(tenantId)\n| mv-expand privateLinkServiceConnection = properties.privateLinkServiceConnections\n| extend targetResourceId = tostring(privateLinkServiceConnection.properties.privateLinkServiceId)\n| extend targetSubscriptionId = tostring(split(targetResourceId, '/')[2])\n| extend isCrossSubscription = iff(peSubscriptionId != targetSubscriptionId and targetSubscriptionId != '', 'Yes', 'No')\n| where isCrossSubscription == 'Yes'\n| project \n    ['Private Endpoint'] = name,\n    ['PE Tenant'] = peTenantId,\n    ['PE Subscription'] = peSubscriptionId,\n    ['PE Resource Group'] = resourceGroup,\n    ['Target Subscription'] = targetSubscriptionId,\n    ['Target Resource'] = tostring(split(targetResourceId, '/')[-1]),\n    ['Connection State'] = tostring(privateLinkServiceConnection.properties.privateLinkServiceConnectionState.status),\n    Location = location\n| order by ['Private Endpoint'] asc",
+        "size": 0,
+        "title": "Cross-Subscription Private Endpoints",
+        "queryType": 1,
+        "resourceType": "microsoft.resourcegraph/resources",
+        "crossComponentResources": [
+          "{Subscriptions}"
+        ],
+        "gridSettings": {
+          "formatters": [
+            {
+              "columnMatch": "Private Endpoint",
+              "formatter": 1,
+              "formatOptions": {
+                "linkTarget": "Resource"
+              }
+            },
+            {
+              "columnMatch": "PE Tenant",
+              "formatter": 0,
+              "formatOptions": {
+                "customColumnWidthSetting": "35ch"
+              }
+            },
+            {
+              "columnMatch": "PE Subscription",
+              "formatter": 0,
+              "formatOptions": {
+                "customColumnWidthSetting": "35ch"
+              }
+            },
+            {
+              "columnMatch": "Target Subscription",
+              "formatter": 0,
+              "formatOptions": {
+                "customColumnWidthSetting": "35ch"
+              }
+            },
+            {
+              "columnMatch": "Connection State",
+              "formatter": 18,
+              "formatOptions": {
+                "thresholdsOptions": "icons",
+                "thresholdsGrid": [
+                  {
+                    "operator": "==",
+                    "thresholdValue": "Approved",
+                    "representation": "success",
+                    "text": "{0}{1}"
+                  },
+                  {
+                    "operator": "==",
+                    "thresholdValue": "Pending",
+                    "representation": "pending",
+                    "text": "{0}{1}"
+                  },
+                  {
+                    "operator": "==",
+                    "thresholdValue": "Rejected",
+                    "representation": "failed",
+                    "text": "{0}{1}"
+                  },
+                  {
+                    "operator": "Default",
+                    "thresholdValue": null,
+                    "representation": "unknown",
+                    "text": "{0}{1}"
+                  }
+                ]
+              }
+            }
+          ],
+          "filter": true
+        }
+      },
+      "name": "query - cross subscription"
+    },
+    {
+      "type": 3,
+      "content": {
+        "version": "KqlItem/1.0",
+        "query": "resources\n| where type =~ 'microsoft.network/privateendpoints'\n| where '*' in ({ResourceGroups}) or resourceGroup in ({ResourceGroups})\n| extend networkInterfaces = properties.networkInterfaces\n| mv-expand networkInterface = networkInterfaces\n| extend nicId = tostring(networkInterface.id)\n| project \n    peId = id,\n    peName = name,\n    peTenantId = tenantId,\n    peSubscriptionId = subscriptionId,\n    peResourceGroup = resourceGroup,\n    peLocation = location,\n    nicId\n| join kind=leftouter (\n    resources\n    | where type =~ 'microsoft.network/networkinterfaces'\n    | extend ipConfigurations = properties.ipConfigurations\n    | mv-expand ipConfig = ipConfigurations\n    | project \n        nicId = id,\n        privateIP = tostring(ipConfig.properties.privateIPAddress),\n        ipAllocation = tostring(ipConfig.properties.privateIPAllocationMethod)\n) on nicId\n| project \n    ['Private Endpoint'] = peName,\n    ['Tenant ID'] = peTenantId,\n    ['Subscription ID'] = peSubscriptionId,\n    ['Resource Group'] = peResourceGroup,\n    Location = peLocation,\n    ['Network Interface ID'] = nicId,\n    ['Private IP'] = privateIP,\n    ['IP Allocation'] = ipAllocation,\n    ['Private Endpoint ID'] = peId\n| order by ['Private Endpoint'] asc",
+        "size": 0,
+        "title": "Private Endpoints with IP Configuration Details",
+        "queryType": 1,
+        "resourceType": "microsoft.resourcegraph/resources",
+        "crossComponentResources": [
+          "{Subscriptions}"
+        ],
+        "gridSettings": {
+          "formatters": [
+            {
+              "columnMatch": "Private Endpoint",
+              "formatter": 1,
+              "formatOptions": {
+                "linkTarget": "Resource"
+              }
+            },
+            {
+              "columnMatch": "Tenant ID",
+              "formatter": 0,
+              "formatOptions": {
+                "customColumnWidthSetting": "35ch"
+              }
+            },
+            {
+              "columnMatch": "Subscription ID",
+              "formatter": 0,
+              "formatOptions": {
+                "customColumnWidthSetting": "35ch"
+              }
+            },
+            {
+              "columnMatch": "Network Interface ID",
+              "formatter": 5
+            },
+            {
+              "columnMatch": "Private Endpoint ID",
+              "formatter": 5
+            }
+          ],
+          "filter": true
+        }
+      },
+      "name": "query - ip configuration"
+    },
+    {
+      "type": 1,
+      "content": {
+        "json": "### Subscription Summary"
+      },
+      "name": "text - subscription summary header"
+    },
+    {
+      "type": 3,
+      "content": {
+        "version": "KqlItem/1.0",
+        "query": "resources\n| where type =~ 'microsoft.network/privateendpoints'\n| where '*' in ({ResourceGroups}) or resourceGroup in ({ResourceGroups})\n| extend tenantId = tostring(tenantId)\n| extend subscriptionId = tostring(subscriptionId)\n| summarize \n    ['Private Endpoints Count'] = count(),\n    ['Resource Groups'] = dcount(resourceGroup),\n    Locations = dcount(location)\n    by tenantId, subscriptionId\n| order by ['Private Endpoints Count'] desc\n| project \n    ['Tenant ID'] = tenantId,\n    ['Subscription ID'] = subscriptionId,\n    ['Private Endpoints Count'],\n    ['Resource Groups'],\n    Locations",
+        "size": 0,
+        "title": "Private Endpoints by Tenant and Subscription",
+        "queryType": 1,
+        "resourceType": "microsoft.resourcegraph/resources",
+        "crossComponentResources": [
+          "{Subscriptions}"
+        ],
+        "gridSettings": {
+          "formatters": [
+            {
+              "columnMatch": "Tenant ID",
+              "formatter": 0,
+              "formatOptions": {
+                "customColumnWidthSetting": "35ch"
+              }
+            },
+            {
+              "columnMatch": "Subscription ID",
+              "formatter": 15,
+              "formatOptions": {
+                "linkTarget": "Resource",
+                "customColumnWidthSetting": "35ch"
+              }
+            },
+            {
+              "columnMatch": "Private Endpoints Count",
+              "formatter": 4,
+              "formatOptions": {
+                "palette": "blue"
+              }
+            }
+          ],
+          "filter": true,
+          "sortBy": [
+            {
+              "itemKey": "Private Endpoints Count",
+              "sortOrder": 2
+            }
+          ]
+        },
+        "sortBy": [
+          {
+            "itemKey": "Private Endpoints Count",
+            "sortOrder": 2
+          }
+        ]
+      },
+      "name": "query - subscription summary"
+    }
+  ],
+  "fallbackResourceIds": [
+    "azure monitor"
+  ],
+  "$schema": "https://github.com/Microsoft/Application-Insights-Workbooks/blob/master/schema/workbook.json"
+}
