@@ -138,7 +138,6 @@ Individual queries are available in `PrivateEndpointsQueries.md` for testing in 
 - Initial release
 - Support for multi-subscription and cross-tenant scenarios
 - Complete Private Endpoint inventory with IP configuration
-- DORA compliance considerations documented
 
 ## License
 
