@@ -369,7 +369,17 @@
               "sortOrder": 1
             }
           ],
-          "labelSettings": []
+          "labelSettings": [],
+          "rowLimit": 10000
+        },
+        "tileSettings": {
+          "showBorder": false
+        },
+        "graphSettings": {
+          "type": 0
+        },
+        "chartSettings": {
+          "showMetrics": false
         },
         "sortBy": [
           {
@@ -414,7 +424,7 @@
       "type": 3,
       "content": {
         "version": "KqlItem/1.0",
-        "query": "resources\n| where type =~ 'microsoft.network/privateendpoints'\n| where '*' in ({ResourceGroups}) or resourceGroup in ({ResourceGroups})\n| extend peSubscriptionId = tostring(subscriptionId)\n| extend peTenantId = tostring(tenantId)\n| mv-expand privateLinkServiceConnection = properties.privateLinkServiceConnections\n| extend targetResourceId = tostring(privateLinkServiceConnection.properties.privateLinkServiceId)\n| extend targetSubscriptionId = tostring(split(targetResourceId, '/')[2])\n| extend isCrossSubscription = iff(peSubscriptionId != targetSubscriptionId and targetSubscriptionId != '', 'Yes', 'No')\n| where isCrossSubscription == 'Yes'\n| project \n    ['Private Endpoint'] = name,\n    ['PE Tenant'] = peTenantId,\n    ['PE Subscription'] = peSubscriptionId,\n    ['PE Resource Group'] = resourceGroup,\n    ['Target Subscription'] = targetSubscriptionId,\n    ['Target Resource'] = tostring(split(targetResourceId, '/')[-1]),\n    ['Connection State'] = tostring(privateLinkServiceConnection.properties.privateLinkServiceConnectionState.status),\n    Location = location\n| order by ['Private Endpoint'] asc",
+        "query": "resources\n| where type =~ 'microsoft.network/privateendpoints'\n| where '*' in ({ResourceGroups}) or resourceGroup in ({ResourceGroups})\n| extend peSubscriptionId = tostring(subscriptionId)\n| extend peTenantId = tostring(tenantId)\n| mv-expand privateLinkServiceConnection = properties.privateLinkServiceConnections\n| extend targetResourceId = tostring(privateLinkServiceConnection.properties.privateLinkServiceId)\n| extend targetSubscriptionId = tostring(split(targetResourceId, '/')[2])\n| extend isCrossSubscription = iff(peSubscriptionId != targetSubscriptionId and targetSubscriptionId != '', 'Yes', 'No')\n| where isCrossSubscription == 'Yes'\n| join kind=leftouter (\n    resources\n    | extend targetTenantId = tostring(tenantId)\n    | project id, targetTenantId\n) on $left.targetResourceId == $right.id\n| extend finalTargetTenant = iff(isempty(targetTenantId), 'N/A - Cross-Tenant', targetTenantId)\n| project \n    ['Private Endpoint'] = name,\n    ['PE Tenant'] = peTenantId,\n    ['PE Subscription'] = peSubscriptionId,\n    ['PE Resource Group'] = resourceGroup,\n    ['Target Tenant'] = finalTargetTenant,\n    ['Target Subscription'] = targetSubscriptionId,\n    ['Target Resource'] = tostring(split(targetResourceId, '/')[-1]),\n    ['Connection State'] = tostring(privateLinkServiceConnection.properties.privateLinkServiceConnectionState.status),\n    Location = location\n| order by ['Private Endpoint'] asc",
         "size": 0,
         "title": "Cross-Subscription Private Endpoints",
         "queryType": 1,
@@ -484,9 +494,17 @@
                   }
                 ]
               }
+            },
+            {
+              "columnMatch": "Target Tenant",
+              "formatter": 0,
+              "formatOptions": {
+                "customColumnWidthSetting": "35ch"
+              }
             }
           ],
-          "filter": true
+          "filter": true,
+          "rowLimit": 10000
         }
       },
       "name": "query - cross subscription"
@@ -535,7 +553,9 @@
               "formatter": 5
             }
           ],
-          "filter": true
+          "filter": true,
+          "labelSettings": [],
+          "rowLimit": 10000
         }
       },
       "name": "query - ip configuration"
@@ -590,7 +610,8 @@
               "itemKey": "Private Endpoints Count",
               "sortOrder": 2
             }
-          ]
+          ],
+          "rowLimit": 10000
         },
         "sortBy": [
           {
