@@ -1,0 +1,831 @@
+{
+  "version": "Notebook/1.0",
+  "items": [
+    {
+      "type": 1,
+      "content": {
+        "json": "# 🛡️ Azure Availability Zones Compliance Dashboard\n\n---\n\n## 📊 Overview\n\nThis workbook provides comprehensive visibility into your Azure resources' **Availability Zones** configuration, helping you improve resilience, meet high availability requirements, and ensure business continuity.\n\n### 🎯 Key Benefits\n- **Identify Risk**: Discover resources without zone redundancy\n- **Improve Resilience**: Enhance application availability and fault tolerance\n- **Meet SLAs**: Ensure compliance with high availability requirements\n- **Optimize Architecture**: Make informed decisions about zone-redundant deployments\n\n### 🔍 Coverage\nThis dashboard analyzes **19 Azure service types** including Compute, Network, Storage, Database, Container, and Integration services."
+      },
+      "name": "text - title"
+    },
+    {
+      "type": 9,
+      "content": {
+        "version": "KqlParameterItem/1.0",
+        "parameters": [
+          {
+            "id": "1f74ed9a-e3ed-498d-bd5b-f68f3836a117",
+            "version": "KqlParameterItem/1.0",
+            "name": "Subscriptions",
+            "type": 6,
+            "isRequired": true,
+            "multiSelect": true,
+            "quote": "'",
+            "delimiter": ",",
+            "typeSettings": {
+              "additionalResourceOptions": [
+                "value::all"
+              ],
+              "includeAll": true,
+              "showDefault": false
+            },
+            "timeContext": {
+              "durationMs": 86400000
+            },
+            "defaultValue": "value::all",
+            "value": [
+              "value::all"
+            ]
+          },
+          {
+            "id": "8c4e5f32-3b2d-4d8f-9e5c-7a6b8c9d0e1f",
+            "version": "KqlParameterItem/1.0",
+            "name": "ResourceGroups",
+            "type": 2,
+            "isRequired": false,
+            "multiSelect": true,
+            "quote": "'",
+            "delimiter": ",",
+            "query": "resources\n| summarize by resourceGroup\n| order by resourceGroup asc\n| project value = resourceGroup, label = resourceGroup, selected = false",
+            "crossComponentResources": [
+              "{Subscriptions}"
+            ],
+            "typeSettings": {
+              "additionalResourceOptions": [
+                "value::all"
+              ],
+              "showDefault": false
+            },
+            "timeContext": {
+              "durationMs": 86400000
+            },
+            "defaultValue": "value::all",
+            "queryType": 1,
+            "resourceType": "microsoft.resourcegraph/resources",
+            "value": [
+              "value::all"
+            ]
+          }
+        ],
+        "style": "pills",
+        "queryType": 0,
+        "resourceType": "microsoft.operationalinsights/workspaces"
+      },
+      "name": "parameters - filters"
+    },
+    {
+      "type": 1,
+      "content": {
+        "json": "---\n\n## 📈 Executive Summary"
+      },
+      "name": "text - overview header"
+    },
+    {
+      "type": 3,
+      "content": {
+        "version": "KqlItem/1.0",
+        "query": "resources\n| where '*' in ({ResourceGroups}) or resourceGroup in ({ResourceGroups})\n| where type in~ (\n    'microsoft.compute/virtualmachines',\n    'microsoft.compute/virtualmachinescalesets',\n    'microsoft.network/loadbalancers',\n    'microsoft.network/publicipaddresses',\n    'microsoft.network/applicationgateways',\n    'microsoft.network/azurefirewalls',\n    'microsoft.storage/storageaccounts',\n    'microsoft.sql/servers/databases',\n    'microsoft.dbforpostgresql/flexibleservers',\n    'microsoft.dbformysql/flexibleservers',\n    'microsoft.cache/redis',\n    'microsoft.containerservice/managedclusters',\n    'microsoft.web/sites',\n    'microsoft.app/containerapps',\n    'microsoft.eventhub/namespaces',\n    'microsoft.servicebus/namespaces',\n    'microsoft.apimanagement/service',\n    'microsoft.keyvault/vaults'\n)\n| extend hasZones = isnotempty(zones)\n| summarize \n    Total = count(),\n    WithZones = countif(hasZones),\n    WithoutZones = countif(not(hasZones))\n| extend ComplianceRate = round(todouble(WithZones) / todouble(Total) * 100, 2)\n| project MetricName = 'Compliance Rate', Value = strcat(ComplianceRate, '%'), Total, WithZones, WithoutZones",
+        "size": 4,
+        "title": "Overall Zone Compliance Rate",
+        "queryType": 1,
+        "resourceType": "microsoft.resourcegraph/resources",
+        "crossComponentResources": [
+          "{Subscriptions}"
+        ],
+        "visualization": "tiles",
+        "tileSettings": {
+          "titleContent": {
+            "columnMatch": "MetricName",
+            "formatter": 1
+          },
+          "leftContent": {
+            "columnMatch": "Value",
+            "formatter": 12,
+            "formatOptions": {
+              "palette": "blue"
+            }
+          },
+          "secondaryContent": {
+            "columnMatch": "WithoutZones",
+            "formatter": 1
+          },
+          "showBorder": true
+        }
+      },
+      "customWidth": "33",
+      "name": "query - compliance rate"
+    },
+    {
+      "type": 3,
+      "content": {
+        "version": "KqlItem/1.0",
+        "query": "resources\n| where '*' in ({ResourceGroups}) or resourceGroup in ({ResourceGroups})\n| where type in~ (\n    'microsoft.compute/virtualmachines',\n    'microsoft.compute/virtualmachinescalesets',\n    'microsoft.network/loadbalancers',\n    'microsoft.network/publicipaddresses',\n    'microsoft.network/applicationgateways',\n    'microsoft.network/azurefirewalls',\n    'microsoft.storage/storageaccounts',\n    'microsoft.sql/servers/databases',\n    'microsoft.dbforpostgresql/flexibleservers',\n    'microsoft.dbformysql/flexibleservers',\n    'microsoft.cache/redis',\n    'microsoft.containerservice/managedclusters',\n    'microsoft.web/sites',\n    'microsoft.app/containerapps',\n    'microsoft.eventhub/namespaces',\n    'microsoft.servicebus/namespaces',\n    'microsoft.apimanagement/service',\n    'microsoft.keyvault/vaults'\n)\n| extend hasZones = isnotempty(zones)\n| where not(hasZones)\n| summarize NonCompliantCount = count()\n| extend MetricName = 'Resources Without Zones'\n| project MetricName, Value = NonCompliantCount",
+        "size": 4,
+        "title": "Resources Without Availability Zones",
+        "queryType": 1,
+        "resourceType": "microsoft.resourcegraph/resources",
+        "crossComponentResources": [
+          "{Subscriptions}"
+        ],
+        "visualization": "tiles",
+        "tileSettings": {
+          "titleContent": {
+            "columnMatch": "MetricName",
+            "formatter": 1
+          },
+          "leftContent": {
+            "columnMatch": "Value",
+            "formatter": 12,
+            "formatOptions": {
+              "palette": "red"
+            }
+          },
+          "showBorder": true
+        }
+      },
+      "customWidth": "33",
+      "name": "query - non-compliant count"
+    },
+    {
+      "type": 3,
+      "content": {
+        "version": "KqlItem/1.0",
+        "query": "resources\n| where '*' in ({ResourceGroups}) or resourceGroup in ({ResourceGroups})\n| where type in~ (\n    'microsoft.compute/virtualmachines',\n    'microsoft.compute/virtualmachinescalesets',\n    'microsoft.network/loadbalancers',\n    'microsoft.network/publicipaddresses',\n    'microsoft.network/applicationgateways',\n    'microsoft.network/azurefirewalls',\n    'microsoft.storage/storageaccounts',\n    'microsoft.sql/servers/databases',\n    'microsoft.dbforpostgresql/flexibleservers',\n    'microsoft.dbformysql/flexibleservers',\n    'microsoft.cache/redis',\n    'microsoft.containerservice/managedclusters',\n    'microsoft.web/sites',\n    'microsoft.app/containerapps',\n    'microsoft.eventhub/namespaces',\n    'microsoft.servicebus/namespaces',\n    'microsoft.apimanagement/service',\n    'microsoft.keyvault/vaults'\n)\n| extend hasZones = isnotempty(zones)\n| where not(hasZones)\n| summarize ResourceTypes = dcount(type)\n| extend MetricName = 'Affected Resource Types'\n| project MetricName, Value = ResourceTypes",
+        "size": 4,
+        "title": "Affected Resource Types",
+        "queryType": 1,
+        "resourceType": "microsoft.resourcegraph/resources",
+        "crossComponentResources": [
+          "{Subscriptions}"
+        ],
+        "visualization": "tiles",
+        "tileSettings": {
+          "titleContent": {
+            "columnMatch": "MetricName",
+            "formatter": 1
+          },
+          "leftContent": {
+            "columnMatch": "Value",
+            "formatter": 12,
+            "formatOptions": {
+              "palette": "orange"
+            }
+          },
+          "showBorder": true
+        }
+      },
+      "customWidth": "33",
+      "name": "query - affected types"
+    },
+    {
+      "type": 1,
+      "content": {
+        "json": "---\n\n## 💻 Virtual Machines Without Availability Zones"
+      },
+      "name": "text - vm header"
+    },
+    {
+      "type": 3,
+      "content": {
+        "version": "KqlItem/1.0",
+        "query": "resources\n| where type =~ 'microsoft.compute/virtualmachines'\n| where '*' in ({ResourceGroups}) or resourceGroup in ({ResourceGroups})\n| extend hasZones = isnotempty(zones)\n| where not(hasZones)\n| extend vmSize = tostring(properties.hardwareProfile.vmSize)\n| extend osType = tostring(properties.storageProfile.osDisk.osType)\n| extend powerState = tostring(properties.extended.instanceView.powerState.code)\n| project \n    ['Virtual Machine'] = name,\n    ['Resource Group'] = resourceGroup,\n    ['Subscription'] = subscriptionId,\n    Location = location,\n    ['VM Size'] = vmSize,\n    ['OS Type'] = osType,\n    ['Power State'] = powerState,\n    ['Resource ID'] = id\n| order by ['Virtual Machine'] asc",
+        "size": 0,
+        "title": "Virtual Machines Without Availability Zones",
+        "queryType": 1,
+        "resourceType": "microsoft.resourcegraph/resources",
+        "crossComponentResources": [
+          "{Subscriptions}"
+        ],
+        "gridSettings": {
+          "formatters": [
+            {
+              "columnMatch": "Virtual Machine",
+              "formatter": 1,
+              "formatOptions": {
+                "linkTarget": "Resource"
+              }
+            },
+            {
+              "columnMatch": "Subscription",
+              "formatter": 0,
+              "formatOptions": {
+                "customColumnWidthSetting": "35ch"
+              }
+            },
+            {
+              "columnMatch": "Power State",
+              "formatter": 18,
+              "formatOptions": {
+                "thresholdsOptions": "icons",
+                "thresholdsGrid": [
+                  {
+                    "operator": "==",
+                    "thresholdValue": "PowerState/running",
+                    "representation": "success",
+                    "text": "Running"
+                  },
+                  {
+                    "operator": "==",
+                    "thresholdValue": "PowerState/stopped",
+                    "representation": "stopped",
+                    "text": "Stopped"
+                  },
+                  {
+                    "operator": "==",
+                    "thresholdValue": "PowerState/deallocated",
+                    "representation": "disabled",
+                    "text": "Deallocated"
+                  },
+                  {
+                    "operator": "Default",
+                    "thresholdValue": null,
+                    "representation": "unknown",
+                    "text": "{0}"
+                  }
+                ]
+              }
+            },
+            {
+              "columnMatch": "Resource ID",
+              "formatter": 5
+            }
+          ],
+          "filter": true,
+          "rowLimit": 10000
+        }
+      },
+      "name": "query - vms without zones"
+    },
+    {
+      "type": 1,
+      "content": {
+        "json": "---\n\n## ⚖️ Load Balancers Without Availability Zones"
+      },
+      "name": "text - lb header"
+    },
+    {
+      "type": 3,
+      "content": {
+        "version": "KqlItem/1.0",
+        "query": "resources\n| where type =~ 'microsoft.network/loadbalancers'\n| where '*' in ({ResourceGroups}) or resourceGroup in ({ResourceGroups})\n| extend hasZones = isnotempty(zones)\n| where not(hasZones)\n| extend skuName = tostring(sku.name)\n| extend frontendCount = array_length(properties.frontendIPConfigurations)\n| extend backendCount = array_length(properties.backendAddressPools)\n| project \n    ['Load Balancer'] = name,\n    ['Resource Group'] = resourceGroup,\n    ['Subscription'] = subscriptionId,\n    Location = location,\n    ['SKU'] = skuName,\n    ['Frontend IPs'] = frontendCount,\n    ['Backend Pools'] = backendCount,\n    ['Resource ID'] = id\n| order by ['Load Balancer'] asc",
+        "size": 0,
+        "title": "Load Balancers Without Zone Redundancy",
+        "queryType": 1,
+        "resourceType": "microsoft.resourcegraph/resources",
+        "crossComponentResources": [
+          "{Subscriptions}"
+        ],
+        "gridSettings": {
+          "formatters": [
+            {
+              "columnMatch": "Load Balancer",
+              "formatter": 1,
+              "formatOptions": {
+                "linkTarget": "Resource"
+              }
+            },
+            {
+              "columnMatch": "Subscription",
+              "formatter": 0,
+              "formatOptions": {
+                "customColumnWidthSetting": "35ch"
+              }
+            },
+            {
+              "columnMatch": "SKU",
+              "formatter": 18,
+              "formatOptions": {
+                "thresholdsOptions": "icons",
+                "thresholdsGrid": [
+                  {
+                    "operator": "==",
+                    "thresholdValue": "Standard",
+                    "representation": "success",
+                    "text": "{0}"
+                  },
+                  {
+                    "operator": "==",
+                    "thresholdValue": "Basic",
+                    "representation": "failed",
+                    "text": "{0}"
+                  },
+                  {
+                    "operator": "Default",
+                    "thresholdValue": null,
+                    "representation": "unknown",
+                    "text": "{0}"
+                  }
+                ]
+              }
+            },
+            {
+              "columnMatch": "Resource ID",
+              "formatter": 5
+            }
+          ],
+          "filter": true,
+          "rowLimit": 10000
+        }
+      },
+      "name": "query - load balancers without zones"
+    },
+    {
+      "type": 1,
+      "content": {
+        "json": "---\n\n## 🌐 Public IP Addresses Without Availability Zones"
+      },
+      "name": "text - pip header"
+    },
+    {
+      "type": 3,
+      "content": {
+        "version": "KqlItem/1.0",
+        "query": "resources\n| where type =~ 'microsoft.network/publicipaddresses'\n| where '*' in ({ResourceGroups}) or resourceGroup in ({ResourceGroups})\n| extend hasZones = isnotempty(zones)\n| where not(hasZones)\n| extend skuName = tostring(sku.name)\n| extend allocationMethod = tostring(properties.publicIPAllocationMethod)\n| extend ipAddress = tostring(properties.ipAddress)\n| extend associatedResource = tostring(properties.ipConfiguration.id)\n| project \n    ['Public IP'] = name,\n    ['Resource Group'] = resourceGroup,\n    ['Subscription'] = subscriptionId,\n    Location = location,\n    ['SKU'] = skuName,\n    ['Allocation Method'] = allocationMethod,\n    ['IP Address'] = ipAddress,\n    ['Associated Resource'] = iff(isempty(associatedResource), 'Not Associated', split(associatedResource, '/')[-3]),\n    ['Resource ID'] = id\n| order by ['Public IP'] asc",
+        "size": 0,
+        "title": "Public IP Addresses Without Zone Redundancy",
+        "queryType": 1,
+        "resourceType": "microsoft.resourcegraph/resources",
+        "crossComponentResources": [
+          "{Subscriptions}"
+        ],
+        "gridSettings": {
+          "formatters": [
+            {
+              "columnMatch": "Public IP",
+              "formatter": 1,
+              "formatOptions": {
+                "linkTarget": "Resource"
+              }
+            },
+            {
+              "columnMatch": "Subscription",
+              "formatter": 0,
+              "formatOptions": {
+                "customColumnWidthSetting": "35ch"
+              }
+            },
+            {
+              "columnMatch": "SKU",
+              "formatter": 18,
+              "formatOptions": {
+                "thresholdsOptions": "icons",
+                "thresholdsGrid": [
+                  {
+                    "operator": "==",
+                    "thresholdValue": "Standard",
+                    "representation": "success",
+                    "text": "{0}"
+                  },
+                  {
+                    "operator": "==",
+                    "thresholdValue": "Basic",
+                    "representation": "failed",
+                    "text": "{0}"
+                  },
+                  {
+                    "operator": "Default",
+                    "thresholdValue": null,
+                    "representation": "unknown",
+                    "text": "{0}"
+                  }
+                ]
+              }
+            },
+            {
+              "columnMatch": "Resource ID",
+              "formatter": 5
+            }
+          ],
+          "filter": true,
+          "rowLimit": 10000
+        }
+      },
+      "name": "query - public ips without zones"
+    },
+    {
+      "type": 1,
+      "content": {
+        "json": "---\n\n## 💾 Storage Accounts Without Zone-Redundant Replication"
+      },
+      "name": "text - storage header"
+    },
+    {
+      "type": 3,
+      "content": {
+        "version": "KqlItem/1.0",
+        "query": "resources\n| where type =~ 'microsoft.storage/storageaccounts'\n| where '*' in ({ResourceGroups}) or resourceGroup in ({ResourceGroups})\n| extend skuName = tostring(sku.name)\n| where skuName !contains 'ZRS'\n| where skuName !contains 'GZRS'\n| extend storageKind = tostring(kind)\n| extend accessTier = tostring(properties.accessTier)\n| extend primaryLocation = tostring(properties.primaryLocation)\n| project \n    ['Storage Account'] = name,\n    ['Resource Group'] = resourceGroup,\n    ['Subscription'] = subscriptionId,\n    Location = location,\n    ['Replication'] = skuName,\n    ['Kind'] = storageKind,\n    ['Access Tier'] = accessTier,\n    ['Primary Location'] = primaryLocation,\n    ['Resource ID'] = id\n| order by ['Storage Account'] asc",
+        "size": 0,
+        "title": "Storage Accounts Without Zone-Redundant Replication (ZRS/GZRS)",
+        "queryType": 1,
+        "resourceType": "microsoft.resourcegraph/resources",
+        "crossComponentResources": [
+          "{Subscriptions}"
+        ],
+        "gridSettings": {
+          "formatters": [
+            {
+              "columnMatch": "Storage Account",
+              "formatter": 1,
+              "formatOptions": {
+                "linkTarget": "Resource"
+              }
+            },
+            {
+              "columnMatch": "Subscription",
+              "formatter": 0,
+              "formatOptions": {
+                "customColumnWidthSetting": "35ch"
+              }
+            },
+            {
+              "columnMatch": "Replication",
+              "formatter": 18,
+              "formatOptions": {
+                "thresholdsOptions": "icons",
+                "thresholdsGrid": [
+                  {
+                    "operator": "==",
+                    "thresholdValue": "Standard_LRS",
+                    "representation": "failed",
+                    "text": "{0}"
+                  },
+                  {
+                    "operator": "==",
+                    "thresholdValue": "Standard_GRS",
+                    "representation": "warning",
+                    "text": "{0}"
+                  },
+                  {
+                    "operator": "==",
+                    "thresholdValue": "Standard_RAGRS",
+                    "representation": "warning",
+                    "text": "{0}"
+                  },
+                  {
+                    "operator": "Default",
+                    "thresholdValue": null,
+                    "representation": "unknown",
+                    "text": "{0}"
+                  }
+                ]
+              }
+            },
+            {
+              "columnMatch": "Resource ID",
+              "formatter": 5
+            }
+          ],
+          "filter": true,
+          "rowLimit": 10000
+        }
+      },
+      "name": "query - storage accounts without zrs"
+    },
+    {
+      "type": 1,
+      "content": {
+        "json": "---\n\n## 🗄️ Database Services Without Availability Zones"
+      },
+      "name": "text - database header"
+    },
+    {
+      "type": 3,
+      "content": {
+        "version": "KqlItem/1.0",
+        "query": "resources\n| where type in~ (\n    'microsoft.sql/servers/databases',\n    'microsoft.dbforpostgresql/flexibleservers',\n    'microsoft.dbformysql/flexibleservers',\n    'microsoft.cache/redis'\n)\n| where '*' in ({ResourceGroups}) or resourceGroup in ({ResourceGroups})\n| extend hasZones = isnotempty(zones) or tobool(properties.zoneRedundant) or tobool(properties.highAvailability.mode == 'ZoneRedundant')\n| where not(hasZones)\n| extend \n    databaseType = case(\n        type =~ 'microsoft.sql/servers/databases', 'SQL Database',\n        type =~ 'microsoft.dbforpostgresql/flexibleservers', 'PostgreSQL Flexible',\n        type =~ 'microsoft.dbformysql/flexibleservers', 'MySQL Flexible',\n        type =~ 'microsoft.cache/redis', 'Redis Cache',\n        type\n    )\n| extend \n    tier = case(\n        type =~ 'microsoft.sql/servers/databases', tostring(sku.tier),\n        type =~ 'microsoft.dbforpostgresql/flexibleservers', tostring(sku.tier),\n        type =~ 'microsoft.dbformysql/flexibleservers', tostring(sku.tier),\n        type =~ 'microsoft.cache/redis', tostring(sku.name),\n        'N/A'\n    )\n| project \n    ['Database Name'] = name,\n    ['Resource Group'] = resourceGroup,\n    ['Subscription'] = subscriptionId,\n    Location = location,\n    ['Type'] = databaseType,\n    ['Tier'] = tier,\n    ['Resource ID'] = id\n| order by ['Database Name'] asc",
+        "size": 0,
+        "title": "Database Services Without Zone Redundancy",
+        "queryType": 1,
+        "resourceType": "microsoft.resourcegraph/resources",
+        "crossComponentResources": [
+          "{Subscriptions}"
+        ],
+        "gridSettings": {
+          "formatters": [
+            {
+              "columnMatch": "Database Name",
+              "formatter": 1,
+              "formatOptions": {
+                "linkTarget": "Resource"
+              }
+            },
+            {
+              "columnMatch": "Subscription",
+              "formatter": 0,
+              "formatOptions": {
+                "customColumnWidthSetting": "35ch"
+              }
+            },
+            {
+              "columnMatch": "Resource ID",
+              "formatter": 5
+            }
+          ],
+          "filter": true,
+          "rowLimit": 10000
+        }
+      },
+      "name": "query - databases without zones"
+    },
+    {
+      "type": 1,
+      "content": {
+        "json": "---\n\n## 🐳 Container and Kubernetes Services Without Availability Zones"
+      },
+      "name": "text - container header"
+    },
+    {
+      "type": 3,
+      "content": {
+        "version": "KqlItem/1.0",
+        "query": "resources\n| where type in~ (\n    'microsoft.containerservice/managedclusters',\n    'microsoft.app/containerapps'\n)\n| where '*' in ({ResourceGroups}) or resourceGroup in ({ResourceGroups})\n| extend hasZones = isnotempty(zones)\n| where not(hasZones)\n| extend \n    serviceType = case(\n        type =~ 'microsoft.containerservice/managedclusters', 'AKS Cluster',\n        type =~ 'microsoft.app/containerapps', 'Container App',\n        type\n    )\n| extend \n    tier = case(\n        type =~ 'microsoft.containerservice/managedclusters', tostring(sku.tier),\n        type =~ 'microsoft.app/containerapps', tostring(properties.managedEnvironmentId),\n        'N/A'\n    )\n| project \n    ['Service Name'] = name,\n    ['Resource Group'] = resourceGroup,\n    ['Subscription'] = subscriptionId,\n    Location = location,\n    ['Type'] = serviceType,\n    ['Tier/Environment'] = tier,\n    ['Resource ID'] = id\n| order by ['Service Name'] asc",
+        "size": 0,
+        "title": "Container Services Without Zone Redundancy",
+        "queryType": 1,
+        "resourceType": "microsoft.resourcegraph/resources",
+        "crossComponentResources": [
+          "{Subscriptions}"
+        ],
+        "gridSettings": {
+          "formatters": [
+            {
+              "columnMatch": "Service Name",
+              "formatter": 1,
+              "formatOptions": {
+                "linkTarget": "Resource"
+              }
+            },
+            {
+              "columnMatch": "Subscription",
+              "formatter": 0,
+              "formatOptions": {
+                "customColumnWidthSetting": "35ch"
+              }
+            },
+            {
+              "columnMatch": "Resource ID",
+              "formatter": 5
+            }
+          ],
+          "filter": true,
+          "rowLimit": 10000
+        }
+      },
+      "name": "query - containers without zones"
+    },
+    {
+      "type": 1,
+      "content": {
+        "json": "---\n\n## 🚀 App Services and API Management Without Availability Zones"
+      },
+      "name": "text - app services header"
+    },
+    {
+      "type": 3,
+      "content": {
+        "version": "KqlItem/1.0",
+        "query": "resources\n| where type in~ (\n    'microsoft.web/sites',\n    'microsoft.apimanagement/service'\n)\n| where '*' in ({ResourceGroups}) or resourceGroup in ({ResourceGroups})\n| extend hasZones = isnotempty(zones)\n| where not(hasZones)\n| extend \n    serviceType = case(\n        type =~ 'microsoft.web/sites', 'App Service',\n        type =~ 'microsoft.apimanagement/service', 'API Management',\n        type\n    )\n| extend \n    tier = case(\n        type =~ 'microsoft.web/sites', tostring(properties.sku),\n        type =~ 'microsoft.apimanagement/service', tostring(sku.name),\n        'N/A'\n    )\n| project \n    ['Service Name'] = name,\n    ['Resource Group'] = resourceGroup,\n    ['Subscription'] = subscriptionId,\n    Location = location,\n    ['Type'] = serviceType,\n    ['SKU/Tier'] = tier,\n    ['Resource ID'] = id\n| order by ['Service Name'] asc",
+        "size": 0,
+        "title": "App Services and API Management Without Zone Redundancy",
+        "queryType": 1,
+        "resourceType": "microsoft.resourcegraph/resources",
+        "crossComponentResources": [
+          "{Subscriptions}"
+        ],
+        "gridSettings": {
+          "formatters": [
+            {
+              "columnMatch": "Service Name",
+              "formatter": 1,
+              "formatOptions": {
+                "linkTarget": "Resource"
+              }
+            },
+            {
+              "columnMatch": "Subscription",
+              "formatter": 0,
+              "formatOptions": {
+                "customColumnWidthSetting": "35ch"
+              }
+            },
+            {
+              "columnMatch": "Resource ID",
+              "formatter": 5
+            }
+          ],
+          "filter": true,
+          "rowLimit": 10000
+        }
+      },
+      "name": "query - app services without zones"
+    },
+    {
+      "type": 1,
+      "content": {
+        "json": "---\n\n## 🔒 Network Security and Gateway Services Without Availability Zones"
+      },
+      "name": "text - network security header"
+    },
+    {
+      "type": 3,
+      "content": {
+        "version": "KqlItem/1.0",
+        "query": "resources\n| where type in~ (\n    'microsoft.network/applicationgateways',\n    'microsoft.network/azurefirewalls'\n)\n| where '*' in ({ResourceGroups}) or resourceGroup in ({ResourceGroups})\n| extend hasZones = isnotempty(zones)\n| where not(hasZones)\n| extend \n    serviceType = case(\n        type =~ 'microsoft.network/applicationgateways', 'Application Gateway',\n        type =~ 'microsoft.network/azurefirewalls', 'Azure Firewall',\n        type\n    )\n| extend \n    tier = tostring(sku.tier)\n| project \n    ['Service Name'] = name,\n    ['Resource Group'] = resourceGroup,\n    ['Subscription'] = subscriptionId,\n    Location = location,\n    ['Type'] = serviceType,\n    ['SKU/Tier'] = tier,\n    ['Resource ID'] = id\n| order by ['Service Name'] asc",
+        "size": 0,
+        "title": "Network Security Services Without Zone Redundancy",
+        "queryType": 1,
+        "resourceType": "microsoft.resourcegraph/resources",
+        "crossComponentResources": [
+          "{Subscriptions}"
+        ],
+        "gridSettings": {
+          "formatters": [
+            {
+              "columnMatch": "Service Name",
+              "formatter": 1,
+              "formatOptions": {
+                "linkTarget": "Resource"
+              }
+            },
+            {
+              "columnMatch": "Subscription",
+              "formatter": 0,
+              "formatOptions": {
+                "customColumnWidthSetting": "35ch"
+              }
+            },
+            {
+              "columnMatch": "Resource ID",
+              "formatter": 5
+            }
+          ],
+          "filter": true,
+          "rowLimit": 10000
+        }
+      },
+      "name": "query - network security without zones"
+    },
+    {
+      "type": 1,
+      "content": {
+        "json": "---\n\n## 📨 Messaging and Integration Services Without Availability Zones"
+      },
+      "name": "text - messaging header"
+    },
+    {
+      "type": 3,
+      "content": {
+        "version": "KqlItem/1.0",
+        "query": "resources\n| where type in~ (\n    'microsoft.eventhub/namespaces',\n    'microsoft.servicebus/namespaces',\n    'microsoft.keyvault/vaults'\n)\n| where '*' in ({ResourceGroups}) or resourceGroup in ({ResourceGroups})\n| extend hasZones = isnotempty(zones)\n| where not(hasZones)\n| extend \n    serviceType = case(\n        type =~ 'microsoft.eventhub/namespaces', 'Event Hubs',\n        type =~ 'microsoft.servicebus/namespaces', 'Service Bus',\n        type =~ 'microsoft.keyvault/vaults', 'Key Vault',\n        type\n    )\n| extend \n    tier = tostring(sku.name)\n| project \n    ['Service Name'] = name,\n    ['Resource Group'] = resourceGroup,\n    ['Subscription'] = subscriptionId,\n    Location = location,\n    ['Type'] = serviceType,\n    ['SKU'] = tier,\n    ['Resource ID'] = id\n| order by ['Service Name'] asc",
+        "size": 0,
+        "title": "Messaging, Integration, and Security Services Without Zone Redundancy",
+        "queryType": 1,
+        "resourceType": "microsoft.resourcegraph/resources",
+        "crossComponentResources": [
+          "{Subscriptions}"
+        ],
+        "gridSettings": {
+          "formatters": [
+            {
+              "columnMatch": "Service Name",
+              "formatter": 1,
+              "formatOptions": {
+                "linkTarget": "Resource"
+              }
+            },
+            {
+              "columnMatch": "Subscription",
+              "formatter": 0,
+              "formatOptions": {
+                "customColumnWidthSetting": "35ch"
+              }
+            },
+            {
+              "columnMatch": "Resource ID",
+              "formatter": 5
+            }
+          ],
+          "filter": true,
+          "rowLimit": 10000
+        }
+      },
+      "name": "query - messaging without zones"
+    },
+    {
+      "type": 1,
+      "content": {
+        "json": "---\n\n## 📊 Analytics & Summary\n\n### Distribution by Resource Type"
+      },
+      "name": "text - by type header"
+    },
+    {
+      "type": 3,
+      "content": {
+        "version": "KqlItem/1.0",
+        "query": "resources\n| where '*' in ({ResourceGroups}) or resourceGroup in ({ResourceGroups})\n| where type in~ (\n    'microsoft.compute/virtualmachines',\n    'microsoft.compute/virtualmachinescalesets',\n    'microsoft.network/loadbalancers',\n    'microsoft.network/publicipaddresses',\n    'microsoft.network/applicationgateways',\n    'microsoft.network/azurefirewalls',\n    'microsoft.containerservice/managedclusters',\n    'microsoft.web/sites',\n    'microsoft.app/containerapps',\n    'microsoft.eventhub/namespaces',\n    'microsoft.servicebus/namespaces',\n    'microsoft.apimanagement/service',\n    'microsoft.keyvault/vaults'\n)\n| extend hasZones = isnotempty(zones)\n| where not(hasZones)\n| extend resourceType = case(\n    type =~ 'microsoft.compute/virtualmachines', 'Virtual Machines',\n    type =~ 'microsoft.compute/virtualmachinescalesets', 'VM Scale Sets',\n    type =~ 'microsoft.network/loadbalancers', 'Load Balancers',\n    type =~ 'microsoft.network/publicipaddresses', 'Public IPs',\n    type =~ 'microsoft.network/applicationgateways', 'Application Gateways',\n    type =~ 'microsoft.network/azurefirewalls', 'Azure Firewalls',\n    type =~ 'microsoft.containerservice/managedclusters', 'AKS Clusters',\n    type =~ 'microsoft.web/sites', 'App Services',\n    type =~ 'microsoft.app/containerapps', 'Container Apps',\n    type =~ 'microsoft.eventhub/namespaces', 'Event Hubs',\n    type =~ 'microsoft.servicebus/namespaces', 'Service Bus',\n    type =~ 'microsoft.apimanagement/service', 'API Management',\n    type =~ 'microsoft.keyvault/vaults', 'Key Vaults',\n    type\n)\n| summarize Count = count() by resourceType\n| order by Count desc\n| project ['Resource Type'] = resourceType, ['Count Without Zones'] = Count",
+        "size": 0,
+        "title": "Non-Compliant Resources by Type",
+        "queryType": 1,
+        "resourceType": "microsoft.resourcegraph/resources",
+        "crossComponentResources": [
+          "{Subscriptions}"
+        ],
+        "visualization": "barchart"
+      },
+      "name": "query - by resource type"
+    },
+    {
+      "type": 1,
+      "content": {
+        "json": "### Distribution by Location"
+      },
+      "name": "text - by location header"
+    },
+    {
+      "type": 3,
+      "content": {
+        "version": "KqlItem/1.0",
+        "query": "resources\n| where '*' in ({ResourceGroups}) or resourceGroup in ({ResourceGroups})\n| where type in~ (\n    'microsoft.compute/virtualmachines',\n    'microsoft.compute/virtualmachinescalesets',\n    'microsoft.network/loadbalancers',\n    'microsoft.network/publicipaddresses',\n    'microsoft.network/applicationgateways',\n    'microsoft.network/azurefirewalls',\n    'microsoft.storage/storageaccounts',\n    'microsoft.sql/servers/databases',\n    'microsoft.dbforpostgresql/flexibleservers',\n    'microsoft.dbformysql/flexibleservers',\n    'microsoft.cache/redis',\n    'microsoft.containerservice/managedclusters',\n    'microsoft.web/sites',\n    'microsoft.app/containerapps',\n    'microsoft.eventhub/namespaces',\n    'microsoft.servicebus/namespaces',\n    'microsoft.apimanagement/service',\n    'microsoft.keyvault/vaults'\n)\n| extend hasZones = isnotempty(zones)\n| where not(hasZones)\n| summarize Count = count() by location\n| order by Count desc\n| project Location = location, ['Resources Without Zones'] = Count",
+        "size": 0,
+        "title": "Non-Compliant Resources by Azure Region",
+        "queryType": 1,
+        "resourceType": "microsoft.resourcegraph/resources",
+        "crossComponentResources": [
+          "{Subscriptions}"
+        ],
+        "visualization": "piechart"
+      },
+      "name": "query - by location"
+    },
+    {
+      "type": 1,
+      "content": {
+        "json": "### Compliance by Subscription"
+      },
+      "name": "text - subscription summary header"
+    },
+    {
+      "type": 3,
+      "content": {
+        "version": "KqlItem/1.0",
+        "query": "resources\n| where '*' in ({ResourceGroups}) or resourceGroup in ({ResourceGroups})\n| where type in~ (\n    'microsoft.compute/virtualmachines',\n    'microsoft.compute/virtualmachinescalesets',\n    'microsoft.network/loadbalancers',\n    'microsoft.network/publicipaddresses',\n    'microsoft.network/applicationgateways',\n    'microsoft.network/azurefirewalls',\n    'microsoft.storage/storageaccounts',\n    'microsoft.sql/servers/databases',\n    'microsoft.dbforpostgresql/flexibleservers',\n    'microsoft.dbformysql/flexibleservers',\n    'microsoft.cache/redis',\n    'microsoft.containerservice/managedclusters',\n    'microsoft.web/sites',\n    'microsoft.app/containerapps',\n    'microsoft.eventhub/namespaces',\n    'microsoft.servicebus/namespaces',\n    'microsoft.apimanagement/service',\n    'microsoft.keyvault/vaults'\n)\n| extend hasZones = isnotempty(zones)\n| summarize \n    Total = count(),\n    WithZones = countif(hasZones),\n    WithoutZones = countif(not(hasZones)),\n    ResourceTypes = dcount(type)\n    by subscriptionId\n| extend ComplianceRate = round(todouble(WithZones) / todouble(Total) * 100, 2)\n| order by WithoutZones desc\n| project \n    ['Subscription ID'] = subscriptionId,\n    ['Total Resources'] = Total,\n    ['With Zones'] = WithZones,\n    ['Without Zones'] = WithoutZones,\n    ['Compliance Rate %'] = ComplianceRate,\n    ['Resource Types'] = ResourceTypes",
+        "size": 0,
+        "title": "Zone Compliance by Subscription",
+        "queryType": 1,
+        "resourceType": "microsoft.resourcegraph/resources",
+        "crossComponentResources": [
+          "{Subscriptions}"
+        ],
+        "gridSettings": {
+          "formatters": [
+            {
+              "columnMatch": "Subscription ID",
+              "formatter": 15,
+              "formatOptions": {
+                "linkTarget": "Resource",
+                "customColumnWidthSetting": "35ch"
+              }
+            },
+            {
+              "columnMatch": "Without Zones",
+              "formatter": 4,
+              "formatOptions": {
+                "palette": "red"
+              }
+            },
+            {
+              "columnMatch": "Compliance Rate %",
+              "formatter": 4,
+              "formatOptions": {
+                "palette": "greenRed",
+                "aggregation": "Average"
+              },
+              "numberFormat": {
+                "unit": 1,
+                "options": {
+                  "style": "decimal",
+                  "minimumFractionDigits": 2,
+                  "maximumFractionDigits": 2
+                }
+              }
+            },
+            {
+              "columnMatch": "With Zones",
+              "formatter": 4,
+              "formatOptions": {
+                "palette": "green"
+              }
+            }
+          ],
+          "filter": true,
+          "rowLimit": 10000
+        }
+      },
+      "name": "query - subscription summary"
+    }
+  ],
+  "fallbackResourceIds": [
+    "azure monitor"
+  ],
+  "$schema": "https://github.com/Microsoft/Application-Insights-Workbooks/blob/master/schema/workbook.json"
+}
