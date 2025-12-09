@@ -218,7 +218,7 @@ Azure App Service requires **explicit configuration** to enable zone redundancy,
 
 - **Manual Configuration Required**: Zone redundancy must be explicitly enabled during App Service Plan creation or upgrade. It is NOT automatic.
 - **SKU Requirements**: Only Premium v2, Premium v3, Premium v4, and Isolated v2 SKUs support zone redundancy. Basic and Standard tiers do not support this feature.
-- **Instance Requirements**: Minimum of 2 instances required (previously 3). With 2+ instances, you qualify for the 99.99% SLA.
+- **Instance Requirements**: Minimum of 2 instances required. With 2+ instances, you qualify for the 99.99% SLA.
 - **Region Support**: Only available in regions that support availability zones and have zone-redundant scale units.
 - **Configuration Timing**: Zone redundancy must be set during plan creation for new apps, or can be enabled for existing plans if they meet the requirements.
 
@@ -247,7 +247,8 @@ Database services have different zone redundancy behaviors depending on the spec
 
 ### Azure Database for PostgreSQL Flexible Server
 
-- **Zone redundancy available with HA**: When enabling High Availability, zone-redundant HA is the default option if the region supports availability zones.
+- **Zone redundancy available with HA**: When enabling High Availability, zone-redundant HA is offered as the preferred option if the region supports availability zones.
+- **HA must be enabled**: High Availability itself must be explicitly enabled - it is not automatic.
 - **Standby in different zone**: Zone-redundant HA places the primary and standby servers in different availability zones.
 - **Tier requirements**: Available for General Purpose and Business Critical tiers, NOT for Burstable tier.
 - **Must enable at creation**: High availability (including zone redundancy) must be selected during server creation.
@@ -255,7 +256,8 @@ Database services have different zone redundancy behaviors depending on the spec
 
 ### Azure Database for MySQL Flexible Server
 
-- **Zone redundancy available with HA**: Similar to PostgreSQL, zone-redundant HA is the recommended option when creating servers in supported regions.
+- **Zone redundancy available with HA**: Zone-redundant HA is an available option when creating servers in supported regions.
+- **HA must be enabled**: High Availability must be explicitly enabled during server creation.
 - **Must enable at creation**: Zone-redundant HA must be selected during server creation and cannot be changed afterwards (only disabling HA is supported).
 - **Tier requirements**: Available for General Purpose and Business Critical tiers only.
 - **Property checked**: This workbook detects via `properties.highAvailability.mode == 'ZoneRedundant'`.
