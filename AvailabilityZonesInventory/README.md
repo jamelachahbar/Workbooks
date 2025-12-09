@@ -6,6 +6,8 @@ This enhanced Azure Workbook provides a comprehensive, visually appealing dashbo
 
 **Note**: Azure Key Vault is excluded from this dashboard as it provides zone redundancy automatically by default in supported regions and does not require explicit configuration.
 
+**Categories Covered**: This dashboard analyzes resources across Azure's official product categories: Compute, Containers, Networking, Storage, Databases, and Integration.
+
 ## Purpose
 
 The workbook provides comprehensive visibility into:
@@ -59,29 +61,29 @@ The workbook provides comprehensive visibility into:
    - Excludes ZRS, GZRS, and RA-GZRS storage types
    - Storage kind, access tier, and location details
 
-8. **🗄️ Database Services Without Availability Zones**
+8. **🗄️ Databases Without Availability Zones**
    - SQL Databases, PostgreSQL, MySQL, and Redis Cache
    - Zone redundancy configuration status
    - **Note**: These require explicit zone redundancy configuration - not enabled by default
    - Service tier and SKU information
 
-9. **🐳 Container and Kubernetes Services**
+9. **🐳 Containers Without Availability Zones**
    - AKS Clusters without zone-redundant node pools
    - Container Apps without zone redundancy
    - Tier and environment configuration
 
-10. **🚀 App Services and API Management**
+10. **🚀 Compute - App Services Without Availability Zones**
     - App Services without zone redundancy
     - **Note**: App Service zone redundancy requires manual configuration (Premium v2/v3/v4 or Isolated v2 SKUs)
-    - API Management instances without zones
     - SKU and pricing tier details
 
-11. **🔒 Network Security and Gateway Services**
+11. **🔒 Networking - Application Gateways and Firewalls Without Availability Zones**
     - Application Gateways without zone redundancy
     - Azure Firewalls without zone configuration
     - Security tier and SKU information
 
-12. **📨 Messaging and Integration Services**
+12. **📨 Integration Services Without Availability Zones**
+    - API Management instances without zones
     - Event Hubs namespaces without zones
     - Service Bus namespaces without zones
     - **Note**: Key Vault excluded (zone redundant by default)
@@ -108,32 +110,32 @@ The workbook provides comprehensive visibility into:
 
 **Note**: Azure Key Vault is intentionally excluded from this analysis as it provides zone redundancy automatically by default in supported regions.
 
-### Compute Services
+### Compute
 - ☁️ Virtual Machines
 - 📦 Virtual Machine Scale Sets
+- 🚀 App Services (Web Apps, Function Apps, API Apps)
+
+### Containers
 - 🐳 AKS (Azure Kubernetes Service) Clusters
 - 📱 Container Apps
 
-### Network Services
+### Networking
 - ⚖️ Load Balancers (Standard SKU)
 - 🌐 Public IP Addresses
 - 🔒 Application Gateways
 - 🛡️ Azure Firewalls
 
-### Storage Services
+### Storage
 - 💾 Storage Accounts (all tiers)
 
-### Database Services
+### Databases
 - 🗄️ SQL Databases
 - 🐘 PostgreSQL Flexible Servers
 - 🐬 MySQL Flexible Servers
 - 🔴 Redis Cache
 
-### Application Services
-- 🚀 App Services (Web Apps, Function Apps, API Apps)
+### Integration
 - 🔌 API Management Services
-
-### Messaging & Integration
 - 📨 Event Hubs Namespaces
 - 🚌 Service Bus Namespaces
 
@@ -339,6 +341,17 @@ To improve this workbook:
 3. Document any new resource types or properties added
 
 ## Version History
+
+- **v2.4** (2025-12-09): Aligned Resource Categories with Azure Official Product Categories
+  - 📁 Updated resource categorization to match Azure's official product categories
+  - 🔄 Changed "Compute Services" → "Compute" (includes VMs, Scale Sets, App Services)
+  - 🔄 Changed "Container and Kubernetes Services" → "Containers" (AKS, Container Apps)
+  - 🔄 Changed "Network Services" → "Networking" (Load Balancers, Public IPs, Application Gateways, Firewalls)
+  - 🔄 Changed "Storage Services" → "Storage"
+  - 🔄 Changed "Database Services" → "Databases"
+  - 🔄 Reorganized "Application Services" and "Messaging & Integration" → "Integration" (API Management, Event Hubs, Service Bus)
+  - 📖 Updated dashboard sections to reflect Azure's official product hierarchy
+  - ✅ Aligns with Microsoft Learn and Azure portal categorization
 
 - **v2.3** (2025-12-09): Enhanced Documentation for App Services and Databases
   - 📚 Added comprehensive documentation sections for App Service zone redundancy behavior
