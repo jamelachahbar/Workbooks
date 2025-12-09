@@ -270,9 +270,11 @@ Database services have different zone redundancy behaviors depending on the spec
 
 ### Microsoft Documentation
 
+- [Azure App Service zone redundancy](https://learn.microsoft.com/en-us/azure/app-service/configure-zone-redundancy)
 - [Azure SQL Database zone redundancy](https://learn.microsoft.com/en-us/azure/azure-sql/database/high-availability-sla-local-zone-redundancy)
 - [PostgreSQL Flexible Server HA](https://learn.microsoft.com/en-us/azure/postgresql/flexible-server/concepts-high-availability)
 - [MySQL Flexible Server HA](https://learn.microsoft.com/en-us/azure/mysql/flexible-server/concepts-high-availability)
+- [Azure Cache for Redis zone redundancy](https://learn.microsoft.com/en-us/azure/azure-cache-for-redis/cache-how-to-zone-redundancy)
 
 **Summary**: All database services in this workbook require explicit zone redundancy configuration and are correctly flagged when not configured.
 
