@@ -62,6 +62,7 @@ The workbook provides comprehensive visibility into:
 8. **🗄️ Database Services Without Availability Zones**
    - SQL Databases, PostgreSQL, MySQL, and Redis Cache
    - Zone redundancy configuration status
+   - **Note**: These require explicit zone redundancy configuration - not enabled by default
    - Service tier and SKU information
 
 9. **🐳 Container and Kubernetes Services**
@@ -71,6 +72,7 @@ The workbook provides comprehensive visibility into:
 
 10. **🚀 App Services and API Management**
     - App Services without zone redundancy
+    - **Note**: App Service zone redundancy requires manual configuration (Premium v2/v3/v4 or Isolated v2 SKUs)
     - API Management instances without zones
     - SKU and pricing tier details
 
@@ -208,20 +210,91 @@ According to [Microsoft Learn documentation on Key Vault reliability](https://le
 
 This automatic redundancy means Key Vault should not be flagged as non-compliant in availability zone assessments.
 
+## Azure App Service and Zone Redundancy
+
+Azure App Service requires **explicit configuration** to enable zone redundancy, and it is **not enabled by default**:
+
+### App Service Zone Redundancy Behavior
+
+- **Manual Configuration Required**: Zone redundancy must be explicitly enabled during App Service Plan creation or upgrade. It is NOT automatic.
+- **SKU Requirements**: Only Premium v2, Premium v3, Premium v4, and Isolated v2 SKUs support zone redundancy. Basic and Standard tiers do not support this feature.
+- **Instance Requirements**: Minimum of 2 instances required (previously 3). With 2+ instances, you qualify for the 99.99% SLA.
+- **Region Support**: Only available in regions that support availability zones and have zone-redundant scale units.
+- **Configuration Timing**: Zone redundancy must be set during plan creation for new apps, or can be enabled for existing plans if they meet the requirements.
+
+### How Zone Redundancy is Detected
+
+This workbook checks for App Services without zone redundancy by examining the `zones` property, which is only populated when zone redundancy is explicitly enabled.
+
+### Microsoft Documentation
+
+According to [Microsoft Learn documentation on App Service zone redundancy](https://learn.microsoft.com/en-us/azure/app-service/configure-zone-redundancy):
+> Zone redundancy must be enabled when creating a new App Service plan. Once enabled, instances of your app are automatically distributed across available zones.
+
+**Important**: App Services flagged by this workbook require manual action to enable zone redundancy if high availability is needed.
+
+## Azure Database Services and Zone Redundancy
+
+Database services have different zone redundancy behaviors depending on the specific service:
+
+### Azure SQL Database
+
+- **NOT enabled by default**: Zone redundancy must be explicitly configured during database creation or via database settings.
+- **Local redundancy is default**: By default, SQL Database uses local redundancy (multiple copies within same datacenter).
+- **Tier requirements**: Available for Premium, Business Critical, General Purpose (select regions), and Hyperscale tiers.
+- **DTU tiers**: Basic and Standard DTU tiers do NOT support zone redundancy.
+- **Property checked**: This workbook detects zone redundancy via the `properties.zoneRedundant` property.
+
+### Azure Database for PostgreSQL Flexible Server
+
+- **Zone redundancy available with HA**: When enabling High Availability, zone-redundant HA is the default option if the region supports availability zones.
+- **Standby in different zone**: Zone-redundant HA places the primary and standby servers in different availability zones.
+- **Tier requirements**: Available for General Purpose and Business Critical tiers, NOT for Burstable tier.
+- **Must enable at creation**: High availability (including zone redundancy) must be selected during server creation.
+- **Property checked**: This workbook detects via `properties.highAvailability.mode == 'ZoneRedundant'`.
+
+### Azure Database for MySQL Flexible Server
+
+- **Zone redundancy available with HA**: Similar to PostgreSQL, zone-redundant HA is the recommended option when creating servers in supported regions.
+- **Must enable at creation**: Zone-redundant HA must be selected during server creation and cannot be changed afterwards (only disabling HA is supported).
+- **Tier requirements**: Available for General Purpose and Business Critical tiers only.
+- **Property checked**: This workbook detects via `properties.highAvailability.mode == 'ZoneRedundant'`.
+
+### Redis Cache
+
+- **Zone redundancy available**: Premium and Enterprise tiers support zone redundancy in supported regions.
+- **NOT enabled by default**: Must be explicitly configured during cache creation.
+- **Property checked**: Detected via the `zones` property when explicitly configured.
+
+### Microsoft Documentation
+
+- [Azure SQL Database zone redundancy](https://learn.microsoft.com/en-us/azure/azure-sql/database/high-availability-sla-local-zone-redundancy)
+- [PostgreSQL Flexible Server HA](https://learn.microsoft.com/en-us/azure/postgresql/flexible-server/concepts-high-availability)
+- [MySQL Flexible Server HA](https://learn.microsoft.com/en-us/azure/mysql/flexible-server/concepts-high-availability)
+
+**Summary**: All database services in this workbook require explicit zone redundancy configuration and are correctly flagged when not configured.
+
 ## Best Practices
 
 1. **Virtual Machines**: Deploy critical VMs across availability zones (zones 1, 2, 3)
 2. **Load Balancers**: Use Standard SKU with zone-redundant frontend IPs
 3. **Storage Accounts**: Use ZRS or GZRS for production workloads requiring high availability
-4. **Databases**: Enable zone redundancy for business-critical database services
-5. **Public IPs**: Configure Standard SKU public IPs with zone redundancy
+4. **Databases**: 
+   - **SQL Database**: Enable zone redundancy in Premium, Business Critical, or General Purpose tiers
+   - **PostgreSQL/MySQL Flexible Server**: Enable zone-redundant high availability during server creation (General Purpose or Business Critical tiers)
+   - **Redis Cache**: Configure zone redundancy in Premium or Enterprise tiers
+5. **App Services**: Enable zone redundancy for Premium v2/v3/v4 or Isolated v2 plans with minimum 2 instances
+6. **Public IPs**: Configure Standard SKU public IPs with zone redundancy
+7. **Key Vault**: No action needed - zone redundancy is automatic in supported regions
 
 ## Limitations
 
 - Only shows resources in regions that support Availability Zones
 - Some resource types may have zone configuration in properties not detected by this workbook
-- Database zone redundancy detection depends on specific property availability
+- Database zone redundancy detection depends on specific property availability (uses `zoneRedundant` and `highAvailability.mode` properties)
 - **Azure Key Vault is excluded** as it provides zone redundancy by default in supported regions
+- **App Services** require explicit zone redundancy configuration (Premium v2/v3/v4 or Isolated v2 SKUs with 2+ instances)
+- **Database services** (SQL, PostgreSQL, MySQL) require explicit zone redundancy or HA configuration - not enabled by default
 - Requires appropriate RBAC permissions to query resources
 
 ## Required Permissions
@@ -262,6 +335,14 @@ To improve this workbook:
 3. Document any new resource types or properties added
 
 ## Version History
+
+- **v2.3** (2025-12-09): Enhanced Documentation for App Services and Databases
+  - 📚 Added comprehensive documentation sections for App Service zone redundancy behavior
+  - 📚 Added detailed database services zone redundancy documentation (SQL, PostgreSQL, MySQL, Redis)
+  - 📝 Clarified that App Services require explicit zone redundancy configuration (Premium SKUs)
+  - 📝 Documented database zone redundancy requirements and detection methods
+  - ✅ Updated Best Practices section with specific guidance for each service type
+  - 🔍 No query changes - existing detection logic already correct
 
 - **v2.2** (2025-12-09): Key Vault Exclusion Fix
   - 🔧 Removed Key Vault from zone redundancy compliance checks
