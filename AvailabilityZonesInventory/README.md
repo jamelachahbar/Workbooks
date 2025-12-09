@@ -92,6 +92,7 @@ The workbook provides comprehensive visibility into:
 
 13. **Distribution by Resource Type**
     - Interactive bar chart showing non-compliant resources by type
+    - **Includes all categories**: Compute, Containers, Networking, Storage, Databases, Integration
     - Friendly resource type names
     - Count-based visualization
 
@@ -341,6 +342,16 @@ To improve this workbook:
 3. Document any new resource types or properties added
 
 ## Version History
+
+- **v2.5** (2025-12-09): Separated Dashboard Sections by Azure Category
+  - 🔀 Separated App Services from API Management into distinct sections
+  - 🚀 "Compute - App Services" section now standalone (Compute category)
+  - 🔌 "Integration Services" section now includes API Management, Event Hubs, Service Bus
+  - 📊 Fixed analytics "Distribution by Resource Type" to include ALL categories
+  - ✅ Added Storage Accounts to analytics (checks for non-ZRS/GZRS SKUs)
+  - ✅ Added Database services to analytics (SQL, PostgreSQL, MySQL, Redis)
+  - 📈 Analytics now covers complete picture: Compute, Containers, Networking, Storage, Databases, Integration
+  - 🎯 Each Azure product category now has dedicated dashboard section
 
 - **v2.4** (2025-12-09): Aligned Resource Categories with Azure Official Product Categories
   - 📁 Updated resource categorization to match Azure's official product categories

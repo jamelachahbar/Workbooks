@@ -576,7 +576,7 @@
     {
       "type": 1,
       "content": {
-        "json": "---\n\n## 🚀 App Services and API Management Without Availability Zones"
+        "json": "---\n\n## 🚀 Compute - App Services Without Availability Zones"
       },
       "name": "text - app services header"
     },
@@ -584,9 +584,9 @@
       "type": 3,
       "content": {
         "version": "KqlItem/1.0",
-        "query": "resources\n| where type in~ (\n    'microsoft.web/sites',\n    'microsoft.apimanagement/service'\n)\n| where '*' in ({ResourceGroups}) or resourceGroup in ({ResourceGroups})\n| extend hasZones = isnotempty(zones)\n| where not(hasZones)\n| extend \n    serviceType = case(\n        type =~ 'microsoft.web/sites', 'App Service',\n        type =~ 'microsoft.apimanagement/service', 'API Management',\n        type\n    )\n| extend \n    tier = case(\n        type =~ 'microsoft.web/sites', tostring(properties.sku),\n        type =~ 'microsoft.apimanagement/service', tostring(sku.name),\n        'N/A'\n    )\n| project \n    ['Service Name'] = name,\n    ['Resource Group'] = resourceGroup,\n    ['Subscription'] = subscriptionId,\n    Location = location,\n    ['Type'] = serviceType,\n    ['SKU/Tier'] = tier,\n    ['Resource ID'] = id\n| order by ['Service Name'] asc",
+        "query": "resources\n| where type =~ 'microsoft.web/sites'\n| where '*' in ({ResourceGroups}) or resourceGroup in ({ResourceGroups})\n| extend hasZones = isnotempty(zones)\n| where not(hasZones)\n| extend tier = tostring(properties.sku)\n| project \n    ['Service Name'] = name,\n    ['Resource Group'] = resourceGroup,\n    ['Subscription'] = subscriptionId,\n    Location = location,\n    ['SKU/Tier'] = tier,\n    ['Resource ID'] = id\n| order by ['Service Name'] asc",
         "size": 0,
-        "title": "App Services and API Management Without Zone Redundancy",
+        "title": "App Services Without Zone Redundancy",
         "queryType": 1,
         "resourceType": "microsoft.resourcegraph/resources",
         "crossComponentResources": [
@@ -668,7 +668,7 @@
     {
       "type": 1,
       "content": {
-        "json": "---\n\n## 📨 Messaging and Integration Services Without Availability Zones"
+        "json": "---\n\n## 🔌 Integration Services Without Availability Zones"
       },
       "name": "text - messaging header"
     },
@@ -676,9 +676,9 @@
       "type": 3,
       "content": {
         "version": "KqlItem/1.0",
-        "query": "resources\n| where type in~ (\n    'microsoft.eventhub/namespaces',\n    'microsoft.servicebus/namespaces'\n)\n| where '*' in ({ResourceGroups}) or resourceGroup in ({ResourceGroups})\n| extend hasZones = isnotempty(zones)\n| where not(hasZones)\n| extend \n    serviceType = case(\n        type =~ 'microsoft.eventhub/namespaces', 'Event Hubs',\n        type =~ 'microsoft.servicebus/namespaces', 'Service Bus',\n        type\n    )\n| extend \n    tier = tostring(sku.name)\n| project \n    ['Service Name'] = name,\n    ['Resource Group'] = resourceGroup,\n    ['Subscription'] = subscriptionId,\n    Location = location,\n    ['Type'] = serviceType,\n    ['SKU'] = tier,\n    ['Resource ID'] = id\n| order by ['Service Name'] asc",
+        "query": "resources\n| where type in~ (\n    'microsoft.apimanagement/service',\n    'microsoft.eventhub/namespaces',\n    'microsoft.servicebus/namespaces'\n)\n| where '*' in ({ResourceGroups}) or resourceGroup in ({ResourceGroups})\n| extend hasZones = isnotempty(zones)\n| where not(hasZones)\n| extend \n    serviceType = case(\n        type =~ 'microsoft.apimanagement/service', 'API Management',\n        type =~ 'microsoft.eventhub/namespaces', 'Event Hubs',\n        type =~ 'microsoft.servicebus/namespaces', 'Service Bus',\n        type\n    )\n| extend \n    tier = tostring(sku.name)\n| project \n    ['Service Name'] = name,\n    ['Resource Group'] = resourceGroup,\n    ['Subscription'] = subscriptionId,\n    Location = location,\n    ['Type'] = serviceType,\n    ['SKU'] = tier,\n    ['Resource ID'] = id\n| order by ['Service Name'] asc",
         "size": 0,
-        "title": "Messaging and Integration Services Without Zone Redundancy",
+        "title": "Integration Services Without Zone Redundancy",
         "queryType": 1,
         "resourceType": "microsoft.resourcegraph/resources",
         "crossComponentResources": [
@@ -722,7 +722,7 @@
       "type": 3,
       "content": {
         "version": "KqlItem/1.0",
-        "query": "resources\n| where '*' in ({ResourceGroups}) or resourceGroup in ({ResourceGroups})\n| where type in~ (\n    'microsoft.compute/virtualmachines',\n    'microsoft.compute/virtualmachinescalesets',\n    'microsoft.network/loadbalancers',\n    'microsoft.network/publicipaddresses',\n    'microsoft.network/applicationgateways',\n    'microsoft.network/azurefirewalls',\n    'microsoft.containerservice/managedclusters',\n    'microsoft.web/sites',\n    'microsoft.app/containerapps',\n    'microsoft.eventhub/namespaces',\n    'microsoft.servicebus/namespaces',\n    'microsoft.apimanagement/service'\n)\n| extend hasZones = isnotempty(zones)\n| where not(hasZones)\n| extend resourceType = case(\n    type =~ 'microsoft.compute/virtualmachines', 'Virtual Machines',\n    type =~ 'microsoft.compute/virtualmachinescalesets', 'VM Scale Sets',\n    type =~ 'microsoft.network/loadbalancers', 'Load Balancers',\n    type =~ 'microsoft.network/publicipaddresses', 'Public IPs',\n    type =~ 'microsoft.network/applicationgateways', 'Application Gateways',\n    type =~ 'microsoft.network/azurefirewalls', 'Azure Firewalls',\n    type =~ 'microsoft.containerservice/managedclusters', 'AKS Clusters',\n    type =~ 'microsoft.web/sites', 'App Services',\n    type =~ 'microsoft.app/containerapps', 'Container Apps',\n    type =~ 'microsoft.eventhub/namespaces', 'Event Hubs',\n    type =~ 'microsoft.servicebus/namespaces', 'Service Bus',\n    type =~ 'microsoft.apimanagement/service', 'API Management',\n    type\n)\n| summarize Count = count() by resourceType\n| order by Count desc\n| project ['Resource Type'] = resourceType, ['Count Without Zones'] = Count",
+        "query": "resources\n| where '*' in ({ResourceGroups}) or resourceGroup in ({ResourceGroups})\n| where type in~ (\n    'microsoft.compute/virtualmachines',\n    'microsoft.compute/virtualmachinescalesets',\n    'microsoft.web/sites',\n    'microsoft.containerservice/managedclusters',\n    'microsoft.app/containerapps',\n    'microsoft.network/loadbalancers',\n    'microsoft.network/publicipaddresses',\n    'microsoft.network/applicationgateways',\n    'microsoft.network/azurefirewalls',\n    'microsoft.apimanagement/service',\n    'microsoft.eventhub/namespaces',\n    'microsoft.servicebus/namespaces'\n)\n| extend hasZones = isnotempty(zones)\n| where not(hasZones)\n| extend resourceType = case(\n    type =~ 'microsoft.compute/virtualmachines', 'Virtual Machines',\n    type =~ 'microsoft.compute/virtualmachinescalesets', 'VM Scale Sets',\n    type =~ 'microsoft.web/sites', 'App Services',\n    type =~ 'microsoft.containerservice/managedclusters', 'AKS Clusters',\n    type =~ 'microsoft.app/containerapps', 'Container Apps',\n    type =~ 'microsoft.network/loadbalancers', 'Load Balancers',\n    type =~ 'microsoft.network/publicipaddresses', 'Public IPs',\n    type =~ 'microsoft.network/applicationgateways', 'Application Gateways',\n    type =~ 'microsoft.network/azurefirewalls', 'Azure Firewalls',\n    type =~ 'microsoft.apimanagement/service', 'API Management',\n    type =~ 'microsoft.eventhub/namespaces', 'Event Hubs',\n    type =~ 'microsoft.servicebus/namespaces', 'Service Bus',\n    type\n)\n| summarize Count = count() by resourceType\n| union (\n    resources\n    | where '*' in ({ResourceGroups}) or resourceGroup in ({ResourceGroups})\n    | where type =~ 'microsoft.storage/storageaccounts'\n    | extend skuName = tostring(sku.name)\n    | where skuName !contains 'ZRS' and skuName !contains 'GZRS'\n    | summarize Count = count()\n    | extend resourceType = 'Storage Accounts'\n)\n| union (\n    resources\n    | where type in~ (\n        'microsoft.sql/servers/databases',\n        'microsoft.dbforpostgresql/flexibleservers',\n        'microsoft.dbformysql/flexibleservers',\n        'microsoft.cache/redis'\n    )\n    | where '*' in ({ResourceGroups}) or resourceGroup in ({ResourceGroups})\n    | extend hasZones = isnotempty(zones) or tobool(properties.zoneRedundant) or tobool(properties.highAvailability.mode == 'ZoneRedundant')\n    | where not(hasZones)\n    | extend resourceType = case(\n        type =~ 'microsoft.sql/servers/databases', 'SQL Databases',\n        type =~ 'microsoft.dbforpostgresql/flexibleservers', 'PostgreSQL Flexible',\n        type =~ 'microsoft.dbformysql/flexibleservers', 'MySQL Flexible',\n        type =~ 'microsoft.cache/redis', 'Redis Cache',\n        type\n    )\n    | summarize Count = count() by resourceType\n)\n| order by Count desc\n| project ['Resource Type'] = resourceType, ['Count Without Zones'] = Count",
         "size": 0,
         "title": "Non-Compliant Resources by Type",
         "queryType": 1,
