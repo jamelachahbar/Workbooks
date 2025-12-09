@@ -216,7 +216,7 @@ Azure Key Vault handles zone redundancy differently than most other Azure resour
 - Only shows resources in regions that support Availability Zones
 - Some resource types may have zone configuration in properties not detected by this workbook
 - Database zone redundancy detection depends on specific property availability
-- **Key Vault**: Zone redundancy is detected using the `enableZoneRedundancy` property (not the `zones` array like other resources). This property must be explicitly enabled at Key Vault creation time and cannot be changed afterwards.
+- **Key Vault**: Uses `enableZoneRedundancy` property instead of `zones` array (see Key Vault Zone Redundancy section for details)
 - Requires appropriate RBAC permissions to query resources
 
 ## Required Permissions
