@@ -4,6 +4,8 @@
 
 This enhanced Azure Workbook provides a comprehensive, visually appealing dashboard to identify resources without Availability Zones enabled. It helps you improve resilience, meet high availability requirements, and ensure business continuity across your Azure environment.
 
+**Note**: Azure Key Vault is excluded from this dashboard as it provides zone redundancy automatically by default in supported regions and does not require explicit configuration.
+
 ## Purpose
 
 The workbook provides comprehensive visibility into:
@@ -12,7 +14,8 @@ The workbook provides comprehensive visibility into:
 - ✅ **Meet SLAs**: Ensure compliance with high availability requirements
 - 🎯 **Optimize Architecture**: Make informed decisions about zone-redundant deployments
 - 📈 **Visual Analytics**: Beautiful charts and metrics for executive reporting
-- 🌐 **Wide Coverage**: Analyzes 19 Azure service types across multiple categories
+- 🌐 **Wide Coverage**: Analyzes 18 Azure service types across multiple categories
+- 🔑 **Smart Exclusions**: Automatically excludes Key Vault (zone redundant by default)
 
 ## Features
 
@@ -79,7 +82,7 @@ The workbook provides comprehensive visibility into:
 12. **📨 Messaging and Integration Services**
     - Event Hubs namespaces without zones
     - Service Bus namespaces without zones
-    - Key Vaults without zone redundancy (checked via `enableZoneRedundancy` property)
+    - **Note**: Key Vault excluded (zone redundant by default)
 
 #### 📊 Analytics & Summary
 
@@ -99,7 +102,9 @@ The workbook provides comprehensive visibility into:
     - Total resources, compliant vs non-compliant counts
     - Resource type diversity per subscription
 
-## Resource Types Covered (19 Types)
+## Resource Types Covered (18 Types)
+
+**Note**: Azure Key Vault is intentionally excluded from this analysis as it provides zone redundancy automatically by default in supported regions.
 
 ### Compute Services
 - ☁️ Virtual Machines
@@ -129,9 +134,6 @@ The workbook provides comprehensive visibility into:
 ### Messaging & Integration
 - 📨 Event Hubs Namespaces
 - 🚌 Service Bus Namespaces
-
-### Security Services
-- 🔑 Key Vaults
 
 ## How to Use
 
@@ -188,20 +190,23 @@ The workbook provides two parameter filters:
 - **Premium_ZRS**: Premium Zone-Redundant Storage
 - **Standard_RAGZRS**: Read-Access Geo-Zone-Redundant Storage
 
-## Key Vault Zone Redundancy
+## Azure Key Vault and Zone Redundancy
 
-Azure Key Vault handles zone redundancy differently than most other Azure resources:
+Azure Key Vault is **intentionally excluded** from this workbook's compliance checks because it handles zone redundancy differently than other Azure services:
 
-### How It Works
-- **Property-based**: Key Vault uses the `properties.enableZoneRedundancy` property instead of the `zones` array used by compute and network resources
-- **Must be set at creation**: Zone redundancy can only be enabled when creating a Key Vault - it cannot be changed after deployment
-- **Available in both SKUs**: Both Standard and Premium SKUs support zone redundancy in regions with availability zones
-- **Not enabled by default**: Unlike some other services, zone redundancy is NOT automatically enabled; you must explicitly set it during creation
+### Why Key Vault Is Excluded
 
-### Important Notes
-- If `enableZoneRedundancy` is not set to `true` during creation, the Key Vault will use local redundancy only
-- This workbook correctly detects Key Vaults without zone redundancy by checking the `enableZoneRedundancy` property
-- For production workloads, Microsoft recommends enabling zone redundancy along with soft-delete and purge protection
+- **Zone Redundancy by Default**: Azure Key Vault automatically provides zone redundancy in all supported regions where availability zones are available. This is built into the service and does not require explicit configuration.
+- **No Configuration Needed**: Unlike VMs, Load Balancers, or other infrastructure resources, you don't need to specify zones or enable zone redundancy when creating a Key Vault.
+- **Transparent Replication**: Key Vault contents are automatically replicated across availability zones within the region and to paired regions for disaster recovery.
+- **Always Compliant**: Since zone redundancy is automatic, Key Vaults are inherently compliant with availability zone best practices in supported regions.
+
+### Microsoft Documentation
+
+According to [Microsoft Learn documentation on Key Vault reliability](https://learn.microsoft.com/en-us/azure/reliability/reliability-key-vault):
+> "By default, Key Vault achieves redundancy by replicating your key vault and its contents within the region and to a paired region."
+
+This automatic redundancy means Key Vault should not be flagged as non-compliant in availability zone assessments.
 
 ## Best Practices
 
@@ -216,7 +221,7 @@ Azure Key Vault handles zone redundancy differently than most other Azure resour
 - Only shows resources in regions that support Availability Zones
 - Some resource types may have zone configuration in properties not detected by this workbook
 - Database zone redundancy detection depends on specific property availability
-- **Key Vault**: Uses `enableZoneRedundancy` property instead of `zones` array (see Key Vault Zone Redundancy section for details)
+- **Azure Key Vault is excluded** as it provides zone redundancy by default in supported regions
 - Requires appropriate RBAC permissions to query resources
 
 ## Required Permissions
@@ -258,11 +263,12 @@ To improve this workbook:
 
 ## Version History
 
-- **v2.1** (2025-12-09): Key Vault Zone Redundancy Fix
-  - 🔧 Fixed Key Vault zone redundancy detection to use `properties.enableZoneRedundancy` instead of `zones` array
-  - 📝 Updated documentation to explain Key Vault's unique zone redundancy configuration
-  - ✅ Key Vaults now correctly identified as non-compliant when zone redundancy is not explicitly enabled
-  - 🎯 All queries updated to handle Key Vault separately from other resources
+- **v2.2** (2025-12-09): Key Vault Exclusion Fix
+  - 🔧 Removed Key Vault from zone redundancy compliance checks
+  - 📝 Key Vault provides zone redundancy by default in supported regions
+  - ✅ Prevents false non-compliance reports for Key Vault resources
+  - 📊 Updated coverage from 19 to 18 service types
+  - 📖 Added comprehensive documentation explaining Key Vault's automatic zone redundancy
 
 - **v2.0** (2025-12-05): Enhanced UI and Expanded Coverage
   - 🎨 Beautiful dashboard with emoji-enhanced sections
