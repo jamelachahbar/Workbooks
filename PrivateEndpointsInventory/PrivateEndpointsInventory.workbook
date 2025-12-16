@@ -372,6 +372,7 @@
           "labelSettings": [],
           "rowLimit": 10000
         },
+        "showExportToExcel": true,
         "tileSettings": {
           "showBorder": false
         },
@@ -505,7 +506,8 @@
           ],
           "filter": true,
           "rowLimit": 10000
-        }
+        },
+        "showExportToExcel": true
       },
       "name": "query - cross subscription"
     },
@@ -556,7 +558,8 @@
           "filter": true,
           "labelSettings": [],
           "rowLimit": 10000
-        }
+        },
+        "showExportToExcel": true
       },
       "name": "query - ip configuration"
     },
@@ -613,6 +616,7 @@
           ],
           "rowLimit": 10000
         },
+        "showExportToExcel": true,
         "sortBy": [
           {
             "itemKey": "Private Endpoints Count",
