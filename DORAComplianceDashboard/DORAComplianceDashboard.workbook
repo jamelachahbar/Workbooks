@@ -137,59 +137,6 @@
             "value": "Dashboard"
           },
           {
-            "id": "b2c3d4e5-6f7a-8b9c-0d1e-2f3a4b5c6d7e",
-            "version": "KqlParameterItem/1.0",
-            "name": "TagName",
-            "label": "Filter by Tag Name",
-            "type": 2,
-            "quote": "'",
-            "delimiter": ",",
-            "query": "resources\n| where isnotempty(tags)\n| project tagKeys = bag_keys(tags)\n| mv-expand tagKey = tagKeys to typeof(string)\n| distinct tagKey\n| order by tagKey asc\n| project value = tagKey, label = tagKey",
-            "crossComponentResources": [
-              "{Subscriptions}"
-            ],
-            "typeSettings": {
-              "additionalResourceOptions": [
-                "value::all"
-              ],
-              "showDefault": false
-            },
-            "timeContext": {
-              "durationMs": 86400000
-            },
-            "queryType": 1,
-            "resourceType": "microsoft.resourcegraph/resources",
-            "value": "value::all"
-          },
-          {
-            "id": "c3d4e5f6-7a8b-9c0d-1e2f-3a4b5c6d7e8f",
-            "version": "KqlParameterItem/1.0",
-            "name": "TagValue",
-            "label": "Filter by Tag Value",
-            "type": 2,
-            "multiSelect": true,
-            "quote": "'",
-            "delimiter": ",",
-            "query": "resources\n| where isnotempty(tags)\n| where isnotempty(tags['{TagName}'])\n| extend tagValue = tostring(tags['{TagName}'])\n| distinct tagValue\n| order by tagValue asc\n| project value = tagValue, label = tagValue",
-            "crossComponentResources": [
-              "{Subscriptions}"
-            ],
-            "typeSettings": {
-              "additionalResourceOptions": [
-                "value::all"
-              ],
-              "showDefault": false
-            },
-            "timeContext": {
-              "durationMs": 86400000
-            },
-            "queryType": 1,
-            "resourceType": "microsoft.resourcegraph/resources",
-            "value": [
-              "value::all"
-            ]
-          },
-          {
             "id": "threshold-zone-excellent",
             "version": "KqlParameterItem/1.0",
             "name": "ThresholdZoneExcellent",
@@ -3286,7 +3233,7 @@
             "type": 3,
             "content": {
               "version": "KqlItem/1.0",
-              "query": "resources\n| where type in~ (\n    'microsoft.containerservice/managedclusters',\n    'microsoft.app/containerapps'\n)\n| where '*' in ({ResourceGroups}) or resourceGroup in ({ResourceGroups})\n| extend hasZones = isnotempty(zones)\n| extend \n    serviceType = case(\n        type =~ 'microsoft.containerservice/managedclusters', 'AKS Cluster',\n        type =~ 'microsoft.app/containerapps', 'Container App',\n        type\n    )\n| extend \n    tier = case(\n        type =~ 'microsoft.containerservice/managedclusters', tostring(sku.tier),\n        type =~ 'microsoft.app/containerapps', tostring(properties.managedEnvironmentId),\n        'N/A'in    )\n| extend networkProfile = case(\n    type =~ 'microsoft.containerservice/managedclusters', tostring(properties.networkProfile.networkPlugin),\n    'N/A'\n)\n| extend DORACompliance = case(\n    hasZones, 'Zone Redundant',\n    'No Zone Redundancy'\n)\n| project \n    ['Service Name'] = name,\n    ['Type'] = serviceType,\n    ['DORA Status'] = DORACompliance,\n    ['Tier'] = tier,\n    ['Network Plugin'] = networkProfile,\n    ['Resource Group'] = resourceGroup,\n    ['Subscription'] = subscriptionId,\n    Location = location,\n    ['DORA Article'] = '9.3c',\n    ['Resource ID'] = id\n| order by ['DORA Status'] asc, ['Service Name'] asc",
+              "query": "resources\n| where type in~ (\n    'microsoft.containerservice/managedclusters',\n    'microsoft.app/containerapps'\n)\n| where '*' in ({ResourceGroups}) or resourceGroup in ({ResourceGroups})\n| extend hasZones = isnotempty(zones)\n| extend \n    serviceType = case(\n        type =~ 'microsoft.containerservice/managedclusters', 'AKS Cluster',\n        type =~ 'microsoft.app/containerapps', 'Container App',\n        type\n    )\n| extend \n    tier = case(\n        type =~ 'microsoft.containerservice/managedclusters', tostring(sku.tier),\n        type =~ 'microsoft.app/containerapps', tostring(properties.managedEnvironmentId),\n        'N/A'\n    )\n| extend networkProfile = case(\n    type =~ 'microsoft.containerservice/managedclusters', tostring(properties.networkProfile.networkPlugin),\n    'N/A'\n)\n| extend DORACompliance = case(\n    hasZones, 'Zone Redundant',\n    'No Zone Redundancy'\n)\n| project \n    ['Service Name'] = name,\n    ['Type'] = serviceType,\n    ['DORA Status'] = DORACompliance,\n    ['Tier'] = tier,\n    ['Network Plugin'] = networkProfile,\n    ['Resource Group'] = resourceGroup,\n    ['Subscription'] = subscriptionId,\n    Location = location,\n    ['DORA Article'] = '9.3c',\n    ['Resource ID'] = id\n| order by ['DORA Status'] asc, ['Service Name'] asc",
               "size": 0,
               "title": "Container Services - Zone Redundancy (Article 9.3c)",
               "showExportToExcel": true,
@@ -3832,7 +3779,7 @@
             "type": 3,
             "content": {
               "version": "KqlItem/1.0",
-              "query": "resources\n| where type =~ 'microsoft.databricks/workspaces'\n| where '*' in ({ResourceGroups}) or resourceGroup in ({ResourceGroups})\n| extend enableNoPublicIp = tobool(properties.parameters.enableNoPublicIp.value)\n| extend publicNetworkAccess = tostring(properties.publicNetworkAccess)\n| extend hasPrivateEndpoint = isnotnull(properties.privateEndpointConnections) and array_length(properties.privateEndpointConnections) > 0\n| extend pricingTier = tostring(sku.name)\n| extend DORACompliance = case(\n    enableNoPublicIp == true and hasPrivateEndpoint, 'Fully Compliant',\n    enableNoPublicIp == true, 'No Public IP - No PE',\n    hasPrivateEndpoint, 'e Only - Public IP Enabled',\n    'Non-Compliant'\n)\n| project \n    ['Databricks Workspace'] = name,\n    ['DORA Status'] = DORACompliance,\n    ['No Public IP'] = case(enableNoPublicIp == true, 'Yes', 'No'),\n    ['Private Endpoint'] = case(hasPrivateEndpoint, 'Yes', 'No'),\n    ['Pricing Tier'] = pricingTier,\n    ['Resource Group'] = resourceGroup,\n    ['Subscription'] = subscriptionId,\n    Location = location,\n    ['DORA Article'] = '9.3a',\n    ['Resource ID'] = id\n| order by ['DORA Status'] asc",
+              "query": "resources\n| where type =~ 'microsoft.databricks/workspaces'\n| where '*' in ({ResourceGroups}) or resourceGroup in ({ResourceGroups})\n| extend enableNoPublicIp = tobool(properties.parameters.enableNoPublicIp.value)\n| extend publicNetworkAccess = tostring(properties.publicNetworkAccess)\n| extend hasPrivateEndpoint = isnotnull(properties.privateEndpointConnections) and array_length(properties.privateEndpointConnections) > 0\n| extend pricingTier = tostring(sku.name)\n| extend DORACompliance = case(\n    enableNoPublicIp == true and hasPrivateEndpoint, 'Fully Compliant',\n    enableNoPublicIp == true, 'No Public IP - No PE',\n    hasPrivateEndpoint, 'PE Only - Public IP Enabled',\n    'Non-Compliant'\n)\n| project \n    ['Databricks Workspace'] = name,\n    ['DORA Status'] = DORACompliance,\n    ['No Public IP'] = case(enableNoPublicIp == true, 'Yes', 'No'),\n    ['Private Endpoint'] = case(hasPrivateEndpoint, 'Yes', 'No'),\n    ['Pricing Tier'] = pricingTier,\n    ['Resource Group'] = resourceGroup,\n    ['Subscription'] = subscriptionId,\n    Location = location,\n    ['DORA Article'] = '9.3a',\n    ['Resource ID'] = id\n| order by ['DORA Status'] asc",
               "size": 0,
               "title": "Azure Databricks - Public IP & Private Link (Article 9.3a)",
               "showExportToExcel": true,
