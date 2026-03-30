@@ -1,0 +1,784 @@
+{
+  "version": "Notebook/1.0",
+  "items": [
+    {
+      "type": 1,
+      "content": {
+        "json": "# Managed Identity & Resource Firewall Dashboard\n\n**Version 1.0** | March 2026\n\nThis workbook provides cross-subscription visibility into **managed identity permissions** and **resource-level firewall/network access** posture for PaaS resources."
+      },
+      "name": "text - title"
+    },
+    {
+      "type": 9,
+      "content": {
+        "version": "KqlParameterItem/1.0",
+        "parameters": [
+          {
+            "id": "a1b2c3d4-0001-4000-8000-000000000001",
+            "version": "KqlParameterItem/1.0",
+            "name": "Subscriptions",
+            "type": 6,
+            "isRequired": true,
+            "multiSelect": true,
+            "quote": "'",
+            "delimiter": ",",
+            "typeSettings": {
+              "additionalResourceOptions": [
+                "value::all"
+              ],
+              "includeAll": true,
+              "showDefault": false
+            },
+            "defaultValue": "value::all",
+            "value": [
+              "value::all"
+            ]
+          },
+          {
+            "id": "a1b2c3d4-0001-4000-8000-000000000002",
+            "version": "KqlParameterItem/1.0",
+            "name": "ResourceGroups",
+            "type": 2,
+            "multiSelect": true,
+            "quote": "'",
+            "delimiter": ",",
+            "query": "resources\n| summarize by resourceGroup\n| order by resourceGroup asc\n| project value = resourceGroup, label = resourceGroup, selected = false",
+            "crossComponentResources": [
+              "{Subscriptions}"
+            ],
+            "typeSettings": {
+              "additionalResourceOptions": [
+                "value::all"
+              ],
+              "showDefault": false
+            },
+            "defaultValue": "value::all",
+            "queryType": 1,
+            "resourceType": "microsoft.resourcegraph/resources",
+            "value": [
+              "value::all"
+            ]
+          },
+          {
+            "id": "a1b2c3d4-0001-4000-8000-000000000003",
+            "version": "KqlParameterItem/1.0",
+            "name": "SelectedTab",
+            "label": "Section",
+            "type": 2,
+            "isRequired": true,
+            "isHiddenWhenLocked": true,
+            "typeSettings": {
+              "additionalResourceOptions": [],
+              "showDefault": false
+            },
+            "jsonData": "[{\"value\": \"ManagedIdentities\", \"label\": \"Managed Identities\", \"selected\": true}, {\"value\": \"HighPrivilege\", \"label\": \"High-Privilege Assignments\"}, {\"value\": \"CrossSub\", \"label\": \"Cross-Subscription\"}, {\"value\": \"FirewallOverview\", \"label\": \"Firewall Overview\"}, {\"value\": \"IPWhitelist\", \"label\": \"IP Whitelist\"}, {\"value\": \"VNetWhitelist\", \"label\": \"VNet Whitelist\"}]",
+            "value": "ManagedIdentities"
+          }
+        ],
+        "style": "pills",
+        "queryType": 1,
+        "resourceType": "microsoft.resourcegraph/resources"
+      },
+      "name": "parameters - filters"
+    },
+    {
+      "type": 11,
+      "content": {
+        "version": "LinkItem/1.0",
+        "style": "tabs",
+        "links": [
+          {
+            "id": "tab-managed-identities",
+            "cellValue": "SelectedTab",
+            "linkTarget": "parameter",
+            "linkLabel": "Managed Identities",
+            "subTarget": "ManagedIdentities",
+            "style": "link"
+          },
+          {
+            "id": "tab-high-privilege",
+            "cellValue": "SelectedTab",
+            "linkTarget": "parameter",
+            "linkLabel": "High-Privilege Assignments",
+            "subTarget": "HighPrivilege",
+            "style": "link"
+          },
+          {
+            "id": "tab-cross-sub",
+            "cellValue": "SelectedTab",
+            "linkTarget": "parameter",
+            "linkLabel": "Cross-Subscription",
+            "subTarget": "CrossSub",
+            "style": "link"
+          },
+          {
+            "id": "tab-firewall-overview",
+            "cellValue": "SelectedTab",
+            "linkTarget": "parameter",
+            "linkLabel": "Firewall Overview",
+            "subTarget": "FirewallOverview",
+            "style": "link"
+          },
+          {
+            "id": "tab-ip-whitelist",
+            "cellValue": "SelectedTab",
+            "linkTarget": "parameter",
+            "linkLabel": "IP Whitelist",
+            "subTarget": "IPWhitelist",
+            "style": "link"
+          },
+          {
+            "id": "tab-vnet-whitelist",
+            "cellValue": "SelectedTab",
+            "linkTarget": "parameter",
+            "linkLabel": "VNet Whitelist",
+            "subTarget": "VNetWhitelist",
+            "style": "link"
+          }
+        ]
+      },
+      "name": "tabs-navigation"
+    },
+    {
+      "type": 12,
+      "content": {
+        "version": "NotebookGroup/1.0",
+        "groupType": "editable",
+        "items": [
+          {
+            "type": 1,
+            "content": {
+              "json": "## Managed Identity Inventory\n\nCombined view of **user-assigned** and **system-assigned** managed identities across all selected subscriptions. Use the Resource Groups filter above to narrow results."
+            },
+            "name": "text - mi-description"
+          },
+          {
+            "type": 3,
+            "content": {
+              "version": "KqlItem/1.0",
+              "query": "resources\n| where type =~ 'microsoft.managedidentity/userassignedidentities'\n| where '*' in ({ResourceGroups}) or resourceGroup in ({ResourceGroups})\n| extend principalId = tostring(properties.principalId)\n| extend clientId = tostring(properties.clientId)\n| project\n    ['Identity Name'] = name,\n    ['Type'] = 'User-Assigned',\n    ['Principal ID'] = principalId,\n    ['Client ID'] = clientId,\n    ['Subscription'] = subscriptionId,\n    ['Resource Group'] = resourceGroup,\n    ['Location'] = location,\n    ['Resource ID'] = id\n| order by ['Identity Name'] asc",
+              "size": 0,
+              "title": "User-Assigned Managed Identities",
+              "queryType": 1,
+              "resourceType": "microsoft.resourcegraph/resources",
+              "crossComponentResources": [
+                "{Subscriptions}"
+              ],
+              "gridSettings": {
+                "formatters": [
+                  {
+                    "columnMatch": "Type",
+                    "formatter": 18,
+                    "formatOptions": {
+                      "thresholdsOptions": "icons",
+                      "thresholdsGrid": [
+                        {
+                          "operator": "==",
+                          "thresholdValue": "User-Assigned",
+                          "representation": "resource",
+                          "text": "{0}"
+                        },
+                        {
+                          "operator": "Default",
+                          "representation": "resource",
+                          "text": "{0}"
+                        }
+                      ]
+                    }
+                  },
+                  {
+                    "columnMatch": "Resource ID",
+                    "formatter": 13,
+                    "formatOptions": {
+                      "linkTarget": "Resource",
+                      "showIcon": true
+                    }
+                  }
+                ],
+                "sortBy": [
+                  {
+                    "itemKey": "Identity Name",
+                    "sortOrder": 1
+                  }
+                ]
+              }
+            },
+            "name": "query - user-assigned-mi"
+          },
+          {
+            "type": 3,
+            "content": {
+              "version": "KqlItem/1.0",
+              "query": "resources\n| where isnotempty(identity)\n| where tostring(identity.type) has 'SystemAssigned'\n| where '*' in ({ResourceGroups}) or resourceGroup in ({ResourceGroups})\n| extend principalId = tostring(identity.principalId)\n| extend identityType = tostring(identity.type)\n| extend friendlyType = case(\n    type =~ 'microsoft.compute/virtualmachines', 'Virtual Machine',\n    type =~ 'microsoft.web/sites', 'App Service',\n    type =~ 'microsoft.containerservice/managedclusters', 'AKS Cluster',\n    type =~ 'microsoft.app/containerapps', 'Container App',\n    type =~ 'microsoft.sql/servers', 'SQL Server',\n    type =~ 'microsoft.databricks/workspaces', 'Databricks',\n    type =~ 'microsoft.logic/workflows', 'Logic App',\n    type =~ 'microsoft.datafactory/factories', 'Data Factory',\n    type =~ 'microsoft.cognitiveservices/accounts', 'Cognitive Services',\n    type =~ 'microsoft.apimanagement/service', 'API Management',\n    type =~ 'microsoft.keyvault/vaults', 'Key Vault',\n    type =~ 'microsoft.containerregistry/registries', 'Container Registry',\n    type\n)\n| project\n    ['Resource Name'] = name,\n    ['Resource Type'] = friendlyType,\n    ['Identity Type'] = identityType,\n    ['Principal ID'] = principalId,\n    ['Subscription'] = subscriptionId,\n    ['Resource Group'] = resourceGroup,\n    ['Location'] = location,\n    ['Resource ID'] = id\n| order by ['Resource Type'] asc, ['Resource Name'] asc",
+              "size": 0,
+              "title": "System-Assigned Managed Identities",
+              "queryType": 1,
+              "resourceType": "microsoft.resourcegraph/resources",
+              "crossComponentResources": [
+                "{Subscriptions}"
+              ],
+              "gridSettings": {
+                "formatters": [
+                  {
+                    "columnMatch": "Resource ID",
+                    "formatter": 13,
+                    "formatOptions": {
+                      "linkTarget": "Resource",
+                      "showIcon": true
+                    }
+                  }
+                ],
+                "sortBy": [
+                  {
+                    "itemKey": "Resource Type",
+                    "sortOrder": 1
+                  }
+                ]
+              }
+            },
+            "name": "query - system-assigned-mi"
+          }
+        ]
+      },
+      "conditionalVisibility": {
+        "parameterName": "SelectedTab",
+        "comparison": "isEqualTo",
+        "value": "ManagedIdentities"
+      },
+      "name": "group - managed-identities"
+    },
+    {
+      "type": 12,
+      "content": {
+        "version": "NotebookGroup/1.0",
+        "groupType": "editable",
+        "items": [
+          {
+            "type": 1,
+            "content": {
+              "json": "## High-Privilege Managed Identity Assignments\n\nIdentifies service principals with dangerous high-privilege roles: **Owner**, **Contributor**, or **User Access Administrator**. These should be reviewed as part of least-privilege audits."
+            },
+            "name": "text - high-priv-description"
+          },
+          {
+            "type": 3,
+            "content": {
+              "version": "KqlItem/1.0",
+              "query": "authorizationresources\n| where type =~ 'microsoft.authorization/roleassignments'\n| extend principalType = tostring(properties.principalType)\n| where principalType =~ 'ServicePrincipal'\n| extend principalId = tostring(properties.principalId)\n| extend roleDefinitionId = tostring(properties.roleDefinitionId)\n| extend roleGuid = tostring(split(roleDefinitionId, '/')[-1])\n| where roleGuid in~ (\n    '8e3af657-a8ff-443c-a75c-2fe8c4bcb635',\n    'b24988ac-6180-42a0-ab88-20f7382dd24c',\n    '18d7d88d-d35e-4fb5-a5c3-7773c20a72d9'\n)\n| extend roleName = case(\n    roleGuid =~ '8e3af657-a8ff-443c-a75c-2fe8c4bcb635', 'Owner',\n    roleGuid =~ 'b24988ac-6180-42a0-ab88-20f7382dd24c', 'Contributor',\n    roleGuid =~ '18d7d88d-d35e-4fb5-a5c3-7773c20a72d9', 'User Access Administrator',\n    'Unknown'\n)\n| extend scope = tostring(properties.scope)\n| extend scopeLevel = case(\n    scope matches regex '^/subscriptions/[^/]+$', 'Subscription',\n    scope matches regex '^/subscriptions/[^/]+/resourceGroups/[^/]+$', 'Resource Group',\n    scope matches regex '^/$', 'Root',\n    scope matches regex '^/providers/Microsoft.Management/managementGroups/', 'Management Group',\n    'Resource'\n)\n| extend riskLevel = case(\n    roleGuid in~ ('8e3af657-a8ff-443c-a75c-2fe8c4bcb635', '18d7d88d-d35e-4fb5-a5c3-7773c20a72d9') \n        and scope matches regex '^(/|/providers/Microsoft.Management/managementGroups/|/subscriptions/[^/]+)$', 'Critical',\n    roleGuid in~ ('8e3af657-a8ff-443c-a75c-2fe8c4bcb635', '18d7d88d-d35e-4fb5-a5c3-7773c20a72d9'), 'High',\n    roleGuid =~ 'b24988ac-6180-42a0-ab88-20f7382dd24c'\n        and scope matches regex '^/subscriptions/[^/]+$', 'High',\n    'Medium'\n)\n| project\n    ['Principal ID'] = principalId,\n    ['Risk Level'] = riskLevel,\n    ['Role'] = roleName,\n    ['Scope Level'] = scopeLevel,\n    ['Scope'] = scope,\n    ['Subscription'] = subscriptionId,\n    ['Assignment ID'] = id\n| order by ['Risk Level'] asc, ['Role'] asc",
+              "size": 0,
+              "title": "High-Privilege Role Assignments (Service Principals)",
+              "queryType": 1,
+              "resourceType": "microsoft.resourcegraph/resources",
+              "crossComponentResources": [
+                "{Subscriptions}"
+              ],
+              "gridSettings": {
+                "formatters": [
+                  {
+                    "columnMatch": "Risk Level",
+                    "formatter": 18,
+                    "formatOptions": {
+                      "thresholdsOptions": "icons",
+                      "thresholdsGrid": [
+                        {
+                          "operator": "==",
+                          "thresholdValue": "Critical",
+                          "representation": "4",
+                          "text": "{0}"
+                        },
+                        {
+                          "operator": "==",
+                          "thresholdValue": "High",
+                          "representation": "2",
+                          "text": "{0}"
+                        },
+                        {
+                          "operator": "==",
+                          "thresholdValue": "Medium",
+                          "representation": "1",
+                          "text": "{0}"
+                        },
+                        {
+                          "operator": "Default",
+                          "representation": "unknown",
+                          "text": "{0}"
+                        }
+                      ]
+                    }
+                  },
+                  {
+                    "columnMatch": "Role",
+                    "formatter": 18,
+                    "formatOptions": {
+                      "thresholdsOptions": "icons",
+                      "thresholdsGrid": [
+                        {
+                          "operator": "==",
+                          "thresholdValue": "Owner",
+                          "representation": "4",
+                          "text": "{0}"
+                        },
+                        {
+                          "operator": "==",
+                          "thresholdValue": "User Access Administrator",
+                          "representation": "4",
+                          "text": "{0}"
+                        },
+                        {
+                          "operator": "==",
+                          "thresholdValue": "Contributor",
+                          "representation": "2",
+                          "text": "{0}"
+                        },
+                        {
+                          "operator": "Default",
+                          "representation": "unknown",
+                          "text": "{0}"
+                        }
+                      ]
+                    }
+                  }
+                ],
+                "sortBy": [
+                  {
+                    "itemKey": "Risk Level",
+                    "sortOrder": 1
+                  }
+                ]
+              }
+            },
+            "name": "query - high-privilege"
+          }
+        ]
+      },
+      "conditionalVisibility": {
+        "parameterName": "SelectedTab",
+        "comparison": "isEqualTo",
+        "value": "HighPrivilege"
+      },
+      "name": "group - high-privilege"
+    },
+    {
+      "type": 12,
+      "content": {
+        "version": "NotebookGroup/1.0",
+        "groupType": "editable",
+        "items": [
+          {
+            "type": 1,
+            "content": {
+              "json": "## Cross-Subscription Role Assignments\n\nManaged identities that have role assignments in a **different subscription** than where the identity lives. This is critical for understanding cross-subscription trust relationships."
+            },
+            "name": "text - cross-sub-description"
+          },
+          {
+            "type": 3,
+            "content": {
+              "version": "KqlItem/1.0",
+              "query": "resources\n| where type =~ 'microsoft.managedidentity/userassignedidentities'\n| extend mi_principalId = tostring(properties.principalId)\n| project mi_principalId, mi_name = name, mi_subscription = subscriptionId, mi_resourceGroup = resourceGroup, mi_id = id\n| join kind=inner (\n    authorizationresources\n    | where type =~ 'microsoft.authorization/roleassignments'\n    | where tostring(properties.principalType) =~ 'ServicePrincipal'\n    | extend ra_principalId = tostring(properties.principalId)\n    | extend ra_roleDefinitionId = tostring(properties.roleDefinitionId)\n    | extend ra_roleGuid = tostring(split(ra_roleDefinitionId, '/')[-1])\n    | extend ra_scope = tostring(properties.scope)\n    | extend ra_subscription = subscriptionId\n    | extend ra_roleName = case(\n        ra_roleGuid =~ '8e3af657-a8ff-443c-a75c-2fe8c4bcb635', 'Owner',\n        ra_roleGuid =~ 'b24988ac-6180-42a0-ab88-20f7382dd24c', 'Contributor',\n        ra_roleGuid =~ 'acdd72a7-3385-48ef-bd42-f606fba81ae7', 'Reader',\n        ra_roleGuid =~ '18d7d88d-d35e-4fb5-a5c3-7773c20a72d9', 'User Access Administrator',\n        ra_roleGuid =~ 'ba92f5b4-2d11-453d-a403-e96b0029c9fe', 'Storage Blob Data Contributor',\n        ra_roleGuid =~ '2a2b9908-6ea1-4ae2-8e65-a410df84e7d1', 'Storage Blob Data Reader',\n        ra_roleGuid =~ '00482a5a-887f-4fb3-b363-3b7fe8e74483', 'Key Vault Administrator',\n        ra_roleGuid =~ '4633458b-17de-408a-b874-0445c86b69e6', 'Key Vault Secrets User',\n        strcat('Other (', ra_roleGuid, ')')\n    )\n    | project ra_principalId, ra_roleName, ra_scope, ra_subscription, ra_roleGuid\n) on $left.mi_principalId == $right.ra_principalId\n| where mi_subscription != ra_subscription\n| project\n    ['Identity Name'] = mi_name,\n    ['Identity Subscription'] = mi_subscription,\n    ['Identity Resource Group'] = mi_resourceGroup,\n    ['Role Assigned'] = ra_roleName,\n    ['Assignment Subscription'] = ra_subscription,\n    ['Assignment Scope'] = ra_scope,\n    ['Cross-Sub'] = 'Yes',\n    ['Identity Resource ID'] = mi_id\n| order by ['Identity Name'] asc, ['Role Assigned'] asc",
+              "size": 0,
+              "title": "Cross-Subscription Assignments (User-Assigned MIs)",
+              "queryType": 1,
+              "resourceType": "microsoft.resourcegraph/resources",
+              "crossComponentResources": [
+                "{Subscriptions}"
+              ],
+              "gridSettings": {
+                "formatters": [
+                  {
+                    "columnMatch": "Cross-Sub",
+                    "formatter": 18,
+                    "formatOptions": {
+                      "thresholdsOptions": "icons",
+                      "thresholdsGrid": [
+                        {
+                          "operator": "==",
+                          "thresholdValue": "Yes",
+                          "representation": "2",
+                          "text": "{0}"
+                        },
+                        {
+                          "operator": "Default",
+                          "representation": "success",
+                          "text": "{0}"
+                        }
+                      ]
+                    }
+                  },
+                  {
+                    "columnMatch": "Identity Resource ID",
+                    "formatter": 13,
+                    "formatOptions": {
+                      "linkTarget": "Resource",
+                      "showIcon": true
+                    }
+                  }
+                ],
+                "sortBy": [
+                  {
+                    "itemKey": "Identity Name",
+                    "sortOrder": 1
+                  }
+                ]
+              }
+            },
+            "name": "query - cross-sub-user-assigned"
+          },
+          {
+            "type": 3,
+            "content": {
+              "version": "KqlItem/1.0",
+              "query": "resources\n| where isnotempty(identity)\n| where tostring(identity.type) has 'SystemAssigned'\n| extend mi_principalId = tostring(identity.principalId)\n| extend mi_resourceType = case(\n    type =~ 'microsoft.compute/virtualmachines', 'VM',\n    type =~ 'microsoft.web/sites', 'App Service',\n    type =~ 'microsoft.containerservice/managedclusters', 'AKS',\n    type =~ 'microsoft.app/containerapps', 'Container App',\n    type =~ 'microsoft.sql/servers', 'SQL Server',\n    type =~ 'microsoft.datafactory/factories', 'Data Factory',\n    type =~ 'microsoft.logic/workflows', 'Logic App',\n    type =~ 'microsoft.cognitiveservices/accounts', 'Cognitive Services',\n    type =~ 'microsoft.apimanagement/service', 'APIM',\n    type\n)\n| project mi_principalId, mi_name = name, mi_resourceType, mi_subscription = subscriptionId, mi_resourceGroup = resourceGroup, mi_id = id\n| join kind=inner (\n    authorizationresources\n    | where type =~ 'microsoft.authorization/roleassignments'\n    | where tostring(properties.principalType) =~ 'ServicePrincipal'\n    | extend ra_principalId = tostring(properties.principalId)\n    | extend ra_roleDefinitionId = tostring(properties.roleDefinitionId)\n    | extend ra_roleGuid = tostring(split(ra_roleDefinitionId, '/')[-1])\n    | extend ra_scope = tostring(properties.scope)\n    | extend ra_subscription = subscriptionId\n    | extend ra_roleName = case(\n        ra_roleGuid =~ '8e3af657-a8ff-443c-a75c-2fe8c4bcb635', 'Owner',\n        ra_roleGuid =~ 'b24988ac-6180-42a0-ab88-20f7382dd24c', 'Contributor',\n        ra_roleGuid =~ 'acdd72a7-3385-48ef-bd42-f606fba81ae7', 'Reader',\n        ra_roleGuid =~ '18d7d88d-d35e-4fb5-a5c3-7773c20a72d9', 'User Access Administrator',\n        ra_roleGuid =~ 'ba92f5b4-2d11-453d-a403-e96b0029c9fe', 'Storage Blob Data Contributor',\n        ra_roleGuid =~ '00482a5a-887f-4fb3-b363-3b7fe8e74483', 'Key Vault Administrator',\n        strcat('Other (', ra_roleGuid, ')')\n    )\n    | project ra_principalId, ra_roleName, ra_scope, ra_subscription, ra_roleGuid\n) on $left.mi_principalId == $right.ra_principalId\n| where mi_subscription != ra_subscription\n| project\n    ['Resource Name'] = mi_name,\n    ['Resource Type'] = mi_resourceType,\n    ['Home Subscription'] = mi_subscription,\n    ['Home Resource Group'] = mi_resourceGroup,\n    ['Role Assigned'] = ra_roleName,\n    ['Target Subscription'] = ra_subscription,\n    ['Target Scope'] = ra_scope,\n    ['Cross-Sub'] = 'Yes',\n    ['Resource ID'] = mi_id\n| order by ['Resource Type'] asc, ['Resource Name'] asc",
+              "size": 0,
+              "title": "Cross-Subscription Assignments (System-Assigned MIs)",
+              "queryType": 1,
+              "resourceType": "microsoft.resourcegraph/resources",
+              "crossComponentResources": [
+                "{Subscriptions}"
+              ],
+              "gridSettings": {
+                "formatters": [
+                  {
+                    "columnMatch": "Cross-Sub",
+                    "formatter": 18,
+                    "formatOptions": {
+                      "thresholdsOptions": "icons",
+                      "thresholdsGrid": [
+                        {
+                          "operator": "==",
+                          "thresholdValue": "Yes",
+                          "representation": "2",
+                          "text": "{0}"
+                        },
+                        {
+                          "operator": "Default",
+                          "representation": "success",
+                          "text": "{0}"
+                        }
+                      ]
+                    }
+                  },
+                  {
+                    "columnMatch": "Resource ID",
+                    "formatter": 13,
+                    "formatOptions": {
+                      "linkTarget": "Resource",
+                      "showIcon": true
+                    }
+                  }
+                ],
+                "sortBy": [
+                  {
+                    "itemKey": "Resource Type",
+                    "sortOrder": 1
+                  }
+                ]
+              }
+            },
+            "name": "query - cross-sub-system-assigned"
+          }
+        ]
+      },
+      "conditionalVisibility": {
+        "parameterName": "SelectedTab",
+        "comparison": "isEqualTo",
+        "value": "CrossSub"
+      },
+      "name": "group - cross-subscription"
+    },
+    {
+      "type": 12,
+      "content": {
+        "version": "NotebookGroup/1.0",
+        "groupType": "editable",
+        "items": [
+          {
+            "type": 1,
+            "content": {
+              "json": "## Unified Resource Network Access Overview\n\nEvery PaaS resource with its complete network access posture: access classification, firewall settings, IP/VNet whitelisting details, private endpoint count, and trusted services bypass.\n\n| Category | Meaning |\n|----------|---------- |\n| **Secured by Perimeter** | Azure Network Security Perimeter — highest protection |\n| **Fully Private** | Public access disabled + private endpoint(s) present |\n| **Private (No PE)** | Public access disabled, but no private endpoints configured |\n| **Semi-Public (Whitelisted)** | Firewall default action = Deny with IP/VNet rules |\n| **Fully Public** | No firewall restrictions, public network access enabled |\n| **Unknown** | Cannot determine status from available properties |"
+            },
+            "name": "text - firewall-description"
+          },
+          {
+            "type": 3,
+            "content": {
+              "version": "KqlItem/1.0",
+              "query": "resources\n| where type in~ (\n    'microsoft.storage/storageaccounts',\n    'microsoft.keyvault/vaults',\n    'microsoft.sql/servers',\n    'microsoft.dbforpostgresql/flexibleservers',\n    'microsoft.dbformysql/flexibleservers',\n    'microsoft.documentdb/databaseaccounts',\n    'microsoft.containerregistry/registries',\n    'microsoft.cache/redis',\n    'microsoft.eventhub/namespaces',\n    'microsoft.servicebus/namespaces',\n    'microsoft.web/sites',\n    'microsoft.cognitiveservices/accounts',\n    'microsoft.apimanagement/service',\n    'microsoft.search/searchservices'\n)\n| where '*' in ({ResourceGroups}) or resourceGroup in ({ResourceGroups})\n| extend friendlyType = case(\n    type =~ 'microsoft.storage/storageaccounts', 'Storage Account',\n    type =~ 'microsoft.keyvault/vaults', 'Key Vault',\n    type =~ 'microsoft.sql/servers', 'SQL Server',\n    type =~ 'microsoft.dbforpostgresql/flexibleservers', 'PostgreSQL Flex',\n    type =~ 'microsoft.dbformysql/flexibleservers', 'MySQL Flex',\n    type =~ 'microsoft.documentdb/databaseaccounts', 'Cosmos DB',\n    type =~ 'microsoft.containerregistry/registries', 'Container Registry',\n    type =~ 'microsoft.cache/redis', 'Redis Cache',\n    type =~ 'microsoft.eventhub/namespaces', 'Event Hub',\n    type =~ 'microsoft.servicebus/namespaces', 'Service Bus',\n    type =~ 'microsoft.web/sites', 'App Service',\n    type =~ 'microsoft.cognitiveservices/accounts', 'Cognitive Services',\n    type =~ 'microsoft.apimanagement/service', 'API Management',\n    type =~ 'microsoft.search/searchservices', 'Azure AI Search',\n    type\n)\n| extend publicNetworkAccess = coalesce(tostring(properties.publicNetworkAccess), '')\n| extend defaultAction = case(\n    type =~ 'microsoft.storage/storageaccounts', tostring(properties.networkRuleSet.defaultAction),\n    type =~ 'microsoft.keyvault/vaults', tostring(properties.networkAcls.defaultAction),\n    type =~ 'microsoft.containerregistry/registries', tostring(properties.networkRuleSet.defaultAction),\n    type =~ 'microsoft.cognitiveservices/accounts', tostring(properties.networkAcls.defaultAction),\n    type =~ 'microsoft.search/searchservices', tostring(properties.networkRuleSet.defaultAction),\n    ''\n)\n| extend ipRuleCount = case(\n    type =~ 'microsoft.storage/storageaccounts', iif(isnotempty(properties.networkRuleSet.ipRules), array_length(properties.networkRuleSet.ipRules), 0),\n    type =~ 'microsoft.keyvault/vaults', iif(isnotempty(properties.networkAcls.ipRules), array_length(properties.networkAcls.ipRules), 0),\n    type =~ 'microsoft.documentdb/databaseaccounts', iif(isnotempty(properties.ipRules), array_length(properties.ipRules), 0),\n    type =~ 'microsoft.containerregistry/registries', iif(isnotempty(properties.networkRuleSet.ipRules), array_length(properties.networkRuleSet.ipRules), 0),\n    type =~ 'microsoft.cognitiveservices/accounts', iif(isnotempty(properties.networkAcls.ipRules), array_length(properties.networkAcls.ipRules), 0),\n    type =~ 'microsoft.search/searchservices', iif(isnotempty(properties.networkRuleSet.ipRules), array_length(properties.networkRuleSet.ipRules), 0),\n    0\n)\n| extend vnetRuleCount = case(\n    type =~ 'microsoft.storage/storageaccounts', iif(isnotempty(properties.networkRuleSet.virtualNetworkRules), array_length(properties.networkRuleSet.virtualNetworkRules), 0),\n    type =~ 'microsoft.keyvault/vaults', iif(isnotempty(properties.networkAcls.virtualNetworkRules), array_length(properties.networkAcls.virtualNetworkRules), 0),\n    type =~ 'microsoft.documentdb/databaseaccounts', iif(isnotempty(properties.virtualNetworkRules), array_length(properties.virtualNetworkRules), 0),\n    type =~ 'microsoft.containerregistry/registries', iif(isnotempty(properties.networkRuleSet.virtualNetworkRules), array_length(properties.networkRuleSet.virtualNetworkRules), 0),\n    0\n)\n| extend privateEndpointConnections = properties.privateEndpointConnections\n| extend hasPrivateEndpoint = isnotempty(privateEndpointConnections) and array_length(privateEndpointConnections) > 0\n| extend peCount = iif(hasPrivateEndpoint, array_length(privateEndpointConnections), 0)\n| extend trustedServicesBypass = case(\n    type =~ 'microsoft.storage/storageaccounts', tostring(properties.networkRuleSet.bypass),\n    type =~ 'microsoft.keyvault/vaults', tostring(properties.networkAcls.bypass),\n    ''\n)\n| extend accessCategory = case(\n    publicNetworkAccess =~ 'SecuredByPerimeter', 'Secured by Perimeter',\n    publicNetworkAccess =~ 'Disabled' and hasPrivateEndpoint, 'Fully Private',\n    defaultAction =~ 'Deny' and hasPrivateEndpoint and (publicNetworkAccess =~ 'Disabled' or isempty(publicNetworkAccess)), 'Fully Private',\n    publicNetworkAccess =~ 'Disabled' and not(hasPrivateEndpoint), 'Private (No PE)',\n    defaultAction =~ 'Deny' and not(hasPrivateEndpoint) and ipRuleCount == 0 and vnetRuleCount == 0, 'Private (No PE)',\n    defaultAction =~ 'Deny' and (ipRuleCount > 0 or vnetRuleCount > 0), 'Semi-Public (Whitelisted)',\n    publicNetworkAccess =~ 'Enabled' or defaultAction =~ 'Allow', 'Fully Public',\n    isempty(publicNetworkAccess) and isempty(defaultAction) and not(hasPrivateEndpoint), 'Fully Public',\n    isempty(publicNetworkAccess) and isempty(defaultAction) and hasPrivateEndpoint, 'Semi-Public (Whitelisted)',\n    'Unknown'\n)\n| extend riskOrder = case(\n    accessCategory == 'Fully Public', 1,\n    accessCategory == 'Semi-Public (Whitelisted)', 2,\n    accessCategory == 'Unknown', 3,\n    accessCategory == 'Private (No PE)', 4,\n    accessCategory == 'Fully Private', 5,\n    accessCategory == 'Secured by Perimeter', 6,\n    9\n)\n| project\n    ['Resource Name'] = name,\n    ['Type'] = friendlyType,\n    ['Access Category'] = accessCategory,\n    ['Public Network Access'] = case(\n        isempty(publicNetworkAccess), 'Not Set',\n        publicNetworkAccess\n    ),\n    ['Firewall Default Action'] = case(\n        isempty(defaultAction), 'Not Set',\n        defaultAction\n    ),\n    ['IP Rules'] = ipRuleCount,\n    ['VNet Rules'] = vnetRuleCount,\n    ['Private Endpoints'] = peCount,\n    ['Trusted Services Bypass'] = case(\n        isempty(trustedServicesBypass), '—',\n        trustedServicesBypass\n    ),\n    ['Resource Group'] = resourceGroup,\n    ['Subscription'] = subscriptionId,\n    ['Location'] = location,\n    riskOrder,\n    ['Resource ID'] = id\n| order by riskOrder asc, ['Type'] asc, ['Resource Name'] asc\n| project-away riskOrder",
+              "size": 0,
+              "title": "Resource Network Access Posture",
+              "queryType": 1,
+              "resourceType": "microsoft.resourcegraph/resources",
+              "crossComponentResources": [
+                "{Subscriptions}"
+              ],
+              "gridSettings": {
+                "formatters": [
+                  {
+                    "columnMatch": "Access Category",
+                    "formatter": 18,
+                    "formatOptions": {
+                      "thresholdsOptions": "icons",
+                      "thresholdsGrid": [
+                        {
+                          "operator": "==",
+                          "thresholdValue": "Fully Public",
+                          "representation": "4",
+                          "text": "{0}"
+                        },
+                        {
+                          "operator": "==",
+                          "thresholdValue": "Semi-Public (Whitelisted)",
+                          "representation": "2",
+                          "text": "{0}"
+                        },
+                        {
+                          "operator": "==",
+                          "thresholdValue": "Unknown",
+                          "representation": "unknown",
+                          "text": "{0}"
+                        },
+                        {
+                          "operator": "==",
+                          "thresholdValue": "Private (No PE)",
+                          "representation": "1",
+                          "text": "{0}"
+                        },
+                        {
+                          "operator": "==",
+                          "thresholdValue": "Fully Private",
+                          "representation": "success",
+                          "text": "{0}"
+                        },
+                        {
+                          "operator": "==",
+                          "thresholdValue": "Secured by Perimeter",
+                          "representation": "success",
+                          "text": "{0}"
+                        },
+                        {
+                          "operator": "Default",
+                          "representation": "unknown",
+                          "text": "{0}"
+                        }
+                      ]
+                    }
+                  },
+                  {
+                    "columnMatch": "Firewall Default Action",
+                    "formatter": 18,
+                    "formatOptions": {
+                      "thresholdsOptions": "icons",
+                      "thresholdsGrid": [
+                        {
+                          "operator": "==",
+                          "thresholdValue": "Deny",
+                          "representation": "success",
+                          "text": "{0}"
+                        },
+                        {
+                          "operator": "==",
+                          "thresholdValue": "Allow",
+                          "representation": "4",
+                          "text": "{0}"
+                        },
+                        {
+                          "operator": "Default",
+                          "representation": "unknown",
+                          "text": "{0}"
+                        }
+                      ]
+                    }
+                  },
+                  {
+                    "columnMatch": "Resource ID",
+                    "formatter": 13,
+                    "formatOptions": {
+                      "linkTarget": "Resource",
+                      "showIcon": true
+                    }
+                  }
+                ],
+                "sortBy": [
+                  {
+                    "itemKey": "Access Category",
+                    "sortOrder": 1
+                  }
+                ]
+              }
+            },
+            "name": "query - firewall-overview"
+          }
+        ]
+      },
+      "conditionalVisibility": {
+        "parameterName": "SelectedTab",
+        "comparison": "isEqualTo",
+        "value": "FirewallOverview"
+      },
+      "name": "group - firewall-overview"
+    },
+    {
+      "type": 12,
+      "content": {
+        "version": "NotebookGroup/1.0",
+        "groupType": "editable",
+        "items": [
+          {
+            "type": 1,
+            "content": {
+              "json": "## IP Address Whitelist Detail\n\nExpands the actual **IP addresses / CIDR ranges** from every resource that has firewall IP rules configured. One row per IP per resource — ideal for auditing exactly which public IPs can reach your semi-public resources."
+            },
+            "name": "text - ip-whitelist-description"
+          },
+          {
+            "type": 3,
+            "content": {
+              "version": "KqlItem/1.0",
+              "query": "resources\n| where type in~ (\n    'microsoft.storage/storageaccounts',\n    'microsoft.keyvault/vaults',\n    'microsoft.sql/servers',\n    'microsoft.documentdb/databaseaccounts',\n    'microsoft.containerregistry/registries',\n    'microsoft.cognitiveservices/accounts',\n    'microsoft.search/searchservices'\n)\n| where '*' in ({ResourceGroups}) or resourceGroup in ({ResourceGroups})\n| extend ipRulesArray = case(\n    type in~ ('microsoft.storage/storageaccounts',\n              'microsoft.containerregistry/registries',\n              'microsoft.search/searchservices'),           properties.networkRuleSet.ipRules,\n    type in~ ('microsoft.keyvault/vaults',\n              'microsoft.cognitiveservices/accounts'),      properties.networkAcls.ipRules,\n    type =~  'microsoft.documentdb/databaseaccounts',      properties.ipRules,\n    type =~  'microsoft.sql/servers',                      properties.ipRules,\n    dynamic([])\n)\n| where isnotempty(ipRulesArray) and array_length(ipRulesArray) > 0\n| extend defaultAction = case(\n    type in~ ('microsoft.storage/storageaccounts',\n              'microsoft.containerregistry/registries',\n              'microsoft.search/searchservices'),           tostring(properties.networkRuleSet.defaultAction),\n    type in~ ('microsoft.keyvault/vaults',\n              'microsoft.cognitiveservices/accounts'),      tostring(properties.networkAcls.defaultAction),\n    ''\n)\n| mv-expand ipRule = ipRulesArray\n| extend ipAddress = coalesce(\n    tostring(ipRule.value),\n    tostring(ipRule.ipAddressOrRange)\n)\n| extend ipAction = tostring(ipRule.action)\n| extend friendlyType = case(\n    type =~ 'microsoft.storage/storageaccounts', 'Storage Account',\n    type =~ 'microsoft.keyvault/vaults', 'Key Vault',\n    type =~ 'microsoft.sql/servers', 'SQL Server',\n    type =~ 'microsoft.documentdb/databaseaccounts', 'Cosmos DB',\n    type =~ 'microsoft.containerregistry/registries', 'Container Registry',\n    type =~ 'microsoft.cognitiveservices/accounts', 'Cognitive Services',\n    type =~ 'microsoft.search/searchservices', 'Azure AI Search',\n    type\n)\n| extend ipType = case(\n    ipAddress contains '/', 'CIDR Range',\n    ipAddress matches regex '^[0-9]+\\\\.[0-9]+\\\\.[0-9]+\\\\.[0-9]+$', 'Single IP',\n    'Other'\n)\n| project\n    ['Resource Name'] = name,\n    ['Type'] = friendlyType,\n    ['Firewall Default'] = defaultAction,\n    ['Whitelisted IP / CIDR'] = ipAddress,\n    ['IP Type'] = ipType,\n    ['Rule Action'] = case(isempty(ipAction), 'Allow', ipAction),\n    ['Resource Group'] = resourceGroup,\n    ['Subscription'] = subscriptionId,\n    ['Location'] = location,\n    ['Resource ID'] = id\n| order by ['Type'] asc, ['Resource Name'] asc, ['Whitelisted IP / CIDR'] asc",
+              "size": 0,
+              "title": "Whitelisted IP Addresses per Resource",
+              "queryType": 1,
+              "resourceType": "microsoft.resourcegraph/resources",
+              "crossComponentResources": [
+                "{Subscriptions}"
+              ],
+              "gridSettings": {
+                "formatters": [
+                  {
+                    "columnMatch": "IP Type",
+                    "formatter": 18,
+                    "formatOptions": {
+                      "thresholdsOptions": "icons",
+                      "thresholdsGrid": [
+                        {
+                          "operator": "==",
+                          "thresholdValue": "Single IP",
+                          "representation": "1",
+                          "text": "{0}"
+                        },
+                        {
+                          "operator": "==",
+                          "thresholdValue": "CIDR Range",
+                          "representation": "2",
+                          "text": "{0}"
+                        },
+                        {
+                          "operator": "Default",
+                          "representation": "unknown",
+                          "text": "{0}"
+                        }
+                      ]
+                    }
+                  },
+                  {
+                    "columnMatch": "Resource ID",
+                    "formatter": 13,
+                    "formatOptions": {
+                      "linkTarget": "Resource",
+                      "showIcon": true
+                    }
+                  }
+                ],
+                "sortBy": [
+                  {
+                    "itemKey": "Type",
+                    "sortOrder": 1
+                  }
+                ]
+              }
+            },
+            "name": "query - ip-whitelist"
+          }
+        ]
+      },
+      "conditionalVisibility": {
+        "parameterName": "SelectedTab",
+        "comparison": "isEqualTo",
+        "value": "IPWhitelist"
+      },
+      "name": "group - ip-whitelist"
+    },
+    {
+      "type": 12,
+      "content": {
+        "version": "NotebookGroup/1.0",
+        "groupType": "editable",
+        "items": [
+          {
+            "type": 1,
+            "content": {
+              "json": "## VNet Service Endpoint Whitelist Detail\n\nExpands the **VNet/Subnet service endpoint rules** from resources that have VNet-based firewall rules. Flags cross-subscription VNets for security review."
+            },
+            "name": "text - vnet-whitelist-description"
+          },
+          {
+            "type": 3,
+            "content": {
+              "version": "KqlItem/1.0",
+              "query": "resources\n| where type in~ (\n    'microsoft.storage/storageaccounts',\n    'microsoft.keyvault/vaults',\n    'microsoft.documentdb/databaseaccounts',\n    'microsoft.containerregistry/registries'\n)\n| where '*' in ({ResourceGroups}) or resourceGroup in ({ResourceGroups})\n| extend vnetRulesArray = case(\n    type =~ 'microsoft.storage/storageaccounts', properties.networkRuleSet.virtualNetworkRules,\n    type =~ 'microsoft.keyvault/vaults', properties.networkAcls.virtualNetworkRules,\n    type =~ 'microsoft.documentdb/databaseaccounts', properties.virtualNetworkRules,\n    type =~ 'microsoft.containerregistry/registries', properties.networkRuleSet.virtualNetworkRules,\n    dynamic([])\n)\n| where isnotempty(vnetRulesArray) and array_length(vnetRulesArray) > 0\n| mv-expand vnetRule = vnetRulesArray\n| extend subnetId = coalesce(tostring(vnetRule.id), tostring(vnetRule.['virtual-network-resource-id']))\n| extend vnetName = tostring(split(subnetId, '/')[-3])\n| extend subnetName = tostring(split(subnetId, '/')[-1])\n| extend vnetSubscription = tostring(split(subnetId, '/')[2])\n| extend friendlyType = case(\n    type =~ 'microsoft.storage/storageaccounts', 'Storage Account',\n    type =~ 'microsoft.keyvault/vaults', 'Key Vault',\n    type =~ 'microsoft.documentdb/databaseaccounts', 'Cosmos DB',\n    type =~ 'microsoft.containerregistry/registries', 'Container Registry',\n    type\n)\n| project\n    ['Resource Name'] = name,\n    ['Type'] = friendlyType,\n    ['VNet Name'] = vnetName,\n    ['Subnet'] = subnetName,\n    ['VNet Subscription'] = vnetSubscription,\n    ['Cross-Sub VNet'] = case(vnetSubscription != subscriptionId, 'Yes', 'No'),\n    ['Resource Group'] = resourceGroup,\n    ['Subscription'] = subscriptionId,\n    ['Full Subnet ID'] = subnetId,\n    ['Resource ID'] = id\n| order by ['Type'] asc, ['Resource Name'] asc, ['VNet Name'] asc",
+              "size": 0,
+              "title": "VNet Service Endpoint Rules per Resource",
+              "queryType": 1,
+              "resourceType": "microsoft.resourcegraph/resources",
+              "crossComponentResources": [
+                "{Subscriptions}"
+              ],
+              "gridSettings": {
+                "formatters": [
+                  {
+                    "columnMatch": "Cross-Sub VNet",
+                    "formatter": 18,
+                    "formatOptions": {
+                      "thresholdsOptions": "icons",
+                      "thresholdsGrid": [
+                        {
+                          "operator": "==",
+                          "thresholdValue": "Yes",
+                          "representation": "2",
+                          "text": "{0}"
+                        },
+                        {
+                          "operator": "==",
+                          "thresholdValue": "No",
+                          "representation": "success",
+                          "text": "{0}"
+                        },
+                        {
+                          "operator": "Default",
+                          "representation": "unknown",
+                          "text": "{0}"
+                        }
+                      ]
+                    }
+                  },
+                  {
+                    "columnMatch": "Resource ID",
+                    "formatter": 13,
+                    "formatOptions": {
+                      "linkTarget": "Resource",
+                      "showIcon": true
+                    }
+                  }
+                ],
+                "sortBy": [
+                  {
+                    "itemKey": "Type",
+                    "sortOrder": 1
+                  }
+                ]
+              }
+            },
+            "name": "query - vnet-whitelist"
+          }
+        ]
+      },
+      "conditionalVisibility": {
+        "parameterName": "SelectedTab",
+        "comparison": "isEqualTo",
+        "value": "VNetWhitelist"
+      },
+      "name": "group - vnet-whitelist"
+    }
+  ],
+  "$schema": "https://github.com/Microsoft/Application-Insights-Workbooks/blob/master/schema/workbook.json"
+}
