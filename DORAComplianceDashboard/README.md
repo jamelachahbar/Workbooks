@@ -27,7 +27,6 @@ The **DORA Compliance Dashboard** is an Azure Monitor Workbook that provides com
 - 🔍 **Detailed Analysis** - Resource-level compliance details with exportable data
 - 🎯 **DORA Article Mapping** - Direct mapping to DORA regulation articles (9.3a-9.3d, 10.1-10.2)
 - 📋 **CSV Export** - All data tables support CSV export for reporting and analysis
-- 🏷️ **Tag Filtering** - Filter resources by custom Azure tags
 
 ### Compliance Areas Covered
 
@@ -142,21 +141,21 @@ The dashboard includes **two companion markdown files** with all KQL queries ext
 
 ### Workbook Architecture
 
-The workbook is organized into **2 main category tabs** with multiple sub-sections:
+The workbook is organized into **2 category tabs** with multiple sub-sections:
 
 #### Category 1: **📖 Overview Tab**
 - **Purpose**: Documentation, changelog, and usage instructions
 - **Content**:
   - Introduction to DORA and workbook purpose
-  - **📋 Changelog & Version History** (expandable, collapsed by default)
-    - Version 1.0 features (Network Security Perimeter, 6-state compliance logic, comprehensive DORA coverage)
+  - **📋 Changelog & Version History** (expandable)
+    - Version history and feature additions
     - Roadmap for future releases
-  - **🎯 Features Supported by Section** (expandable, collapsed by default)
+  - **🎯 Features Supported by Section** (expandable)
     - Comprehensive breakdown of all assessments by DORA article
     - Resource types covered (14 PaaS types for private endpoints)
     - Threshold configuration guide
     - Current limitations
-  - **📚 Usage Instructions** (expandable, collapsed by default)
+  - **📚 Usage Instructions** (expandable)
     - Step-by-step usage guide
     - Compliance status interpretation
     - Best practices and troubleshooting
@@ -242,15 +241,11 @@ The workbook includes dynamic parameters that filter all queries:
 |-----------|------|---------|---------|
 | **Subscriptions** | Multi-select | Select Azure subscriptions to analyze | All accessible subscriptions |
 | **ResourceGroups** | Multi-select | Filter by resource groups | All (`*`) |
-| **TimeRange** | Time picker | Not actively used in current version | Last 24 hours |
-| **ShowHelp** | Dropdown | Show/hide help text sections | Yes |
-| **TagName** | Dropdown | Select tag key for filtering | None |
-| **TagValue** | Dropdown | Select tag value for filtering | None |
+| **ShowHelp** | Dropdown | Show/hide help text sections | No |
 
 **How Filtering Works**:
 - All queries include: `| where '*' in ({ResourceGroups}) or resourceGroup in ({ResourceGroups})`
 - This allows "All" (`*`) selection or specific resource groups
-- Tag filtering is available but optional
 
 ---
 
@@ -456,19 +451,7 @@ The PaaS Private Endpoint Coverage query (Article 9.3a) now supports:
 
 You can add more conditions or change the status labels.
 
-#### 4. Add Custom Tags for Filtering
-
-To add additional tag-based filtering:
-
-1. Use the existing `TagName` and `TagValue` parameters (already configured)
-2. Modify queries to include tag filtering:
-
-```kql
-| where '*' in ({ResourceGroups}) or resourceGroup in ({ResourceGroups})
-| where isempty('{TagName}') or tostring(tags['{TagName}']) == '{TagValue}'
-```
-
-#### 5. Change Tile Sizes
+#### 4. Change Tile Sizes
 
 All executive summary tiles use `"size": "auto"`. To customize:
 
@@ -479,7 +462,7 @@ All executive summary tiles use `"size": "auto"`. To customize:
 }
 ```
 
-#### 6. Customize Color Schemes
+#### 5. Customize Color Schemes
 
 Modify the `palette` in formatters:
 
@@ -1095,7 +1078,6 @@ Risk Percentage = (Non-Compliant Resources / Total Resources) × 100
 
 ### Version 1.1
 - ✅ Added executive summary tiles with auto-sizing
-- ✅ Added tag-based filtering capability
 - ✅ Improved grid formatting and CSV export
 - ✅ Added threshold documentation in KQL queries
 
