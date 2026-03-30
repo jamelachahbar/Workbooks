@@ -71,7 +71,10 @@ resources
     'microsoft.containerregistry/registries',
     'microsoft.documentdb/databaseaccounts'
 )
-| extend hasZones = isnotempty(zones)
+| extend hasZones = case(
+    type =~ 'microsoft.network/loadbalancers', tostring(sku.name) =~ 'Standard',
+    isnotempty(zones)
+)
 | summarize 
     Total = count(),
     ZoneCompliant = countif(hasZones),
@@ -244,7 +247,10 @@ resources
     'microsoft.sql/servers/databases',
     'microsoft.containerservice/managedclusters'
 )
-| extend hasZones = isnotempty(zones)
+| extend hasZones = case(
+    type =~ 'microsoft.network/loadbalancers', tostring(sku.name) =~ 'Standard',
+    isnotempty(zones)
+)
 | summarize 
     TotalResources = count(),
     NonCompliant = countif(not(hasZones)),
@@ -294,7 +300,10 @@ resources
     'microsoft.network/applicationgateways',
     'microsoft.network/azurefirewalls'
 )
-| extend hasZones = isnotempty(zones)
+| extend hasZones = case(
+    type =~ 'microsoft.network/loadbalancers', tostring(sku.name) =~ 'Standard',
+    isnotempty(zones)
+)
 | extend 
     resourceType = case(
         type =~ 'microsoft.network/loadbalancers', 'Load Balancer',
@@ -303,7 +312,7 @@ resources
         type =~ 'microsoft.network/azurefirewalls', 'Azure Firewall',
         type
     )
-| extend skuTier = tostring(sku.tier)
+| extend skuName = tostring(sku.name)
 | project 
     ['Resource Name'] = name,
     ['Resource Type'] = resourceType,
@@ -312,7 +321,7 @@ resources
     ['Resource Group'] = resourceGroup,
     ['Subscription'] = subscriptionId,
     Location = location,
-    ['SKU/Tier'] = skuTier,
+    ['SKU'] = skuName,
     ['Resource ID'] = id
 | order by ['Zone Redundant'] asc, ['Resource Type'] asc, ['Resource Name'] asc
 ```
@@ -989,7 +998,10 @@ resources
     'microsoft.servicebus/namespaces',
     'microsoft.apimanagement/service'
 )
-| extend hasZones = isnotempty(zones)
+| extend hasZones = case(
+    type =~ 'microsoft.network/loadbalancers', tostring(sku.name) =~ 'Standard',
+    isnotempty(zones)
+)
 | extend 
     resourceType = case(
         type =~ 'microsoft.compute/virtualmachines', 'Virtual Machines',
@@ -1042,7 +1054,10 @@ resources
     'microsoft.keyvault/vaults',
     'microsoft.containerregistry/registries'
 )
-| extend hasZones = isnotempty(zones)
+| extend hasZones = case(
+    type =~ 'microsoft.network/loadbalancers', tostring(sku.name) =~ 'Standard',
+    isnotempty(zones)
+)
 | summarize 
     Total = count(),
     ZoneRedundant = countif(hasZones),
@@ -1073,7 +1088,10 @@ resources
     'microsoft.keyvault/vaults',
     'microsoft.containerregistry/registries'
 )
-| extend hasZones = isnotempty(zones)
+| extend hasZones = case(
+    type =~ 'microsoft.network/loadbalancers', tostring(sku.name) =~ 'Standard',
+    isnotempty(zones)
+)
 | summarize 
     TotalResources = count(),
     ZoneRedundant = countif(hasZones),

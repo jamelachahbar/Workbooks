@@ -130,7 +130,10 @@ resources
     'microsoft.containerregistry/registries',
     'microsoft.documentdb/databaseaccounts'
 )
-| extend hasZones = isnotempty(zones)
+| extend hasZones = case(
+    type =~ 'microsoft.network/loadbalancers', tostring(sku.name) =~ 'Standard',
+    isnotempty(zones)
+)
 | summarize 
     Total = count(),
     ZoneCompliant = countif(hasZones),
@@ -367,7 +370,10 @@ resources
     'microsoft.sql/servers/databases',
     'microsoft.containerservice/managedclusters'
 )
-| extend hasZones = isnotempty(zones)
+| extend hasZones = case(
+    type =~ 'microsoft.network/loadbalancers', tostring(sku.name) =~ 'Standard',
+    isnotempty(zones)
+)
 | summarize 
     TotalResources = count(),
     NonCompliant = countif(not(hasZones)),
@@ -425,7 +431,10 @@ resources
     'microsoft.network/applicationgateways',
     'microsoft.network/azurefirewalls'
 )
-| extend hasZones = isnotempty(zones)
+| extend hasZones = case(
+    type =~ 'microsoft.network/loadbalancers', tostring(sku.name) =~ 'Standard',
+    isnotempty(zones)
+)
 | where not(hasZones)
 | extend 
     resourceType = case(
@@ -435,14 +444,14 @@ resources
         type =~ 'microsoft.network/azurefirewalls', 'Azure Firewall',
         type
     )
-| extend skuTier = tostring(sku.tier)
+| extend skuName = tostring(sku.name)
 | project 
     ['Resource Name'] = name,
     ['Resource Type'] = resourceType,
     ['Resource Group'] = resourceGroup,
     ['Subscription'] = subscriptionId,
     Location = location,
-    ['SKU/Tier'] = skuTier,
+    ['SKU'] = skuName,
     ['DORA Article'] = '9.3a',
     ['DORA Impact'] = '🔴 High - Critical Infrastructure',
     ['Resource ID'] = id
@@ -1331,7 +1340,10 @@ resources
     'microsoft.servicebus/namespaces',
     'microsoft.apimanagement/service'
 )
-| extend hasZones = isnotempty(zones)
+| extend hasZones = case(
+    type =~ 'microsoft.network/loadbalancers', tostring(sku.name) =~ 'Standard',
+    isnotempty(zones)
+)
 | extend 
     resourceType = case(
         type =~ 'microsoft.compute/virtualmachines', 'Virtual Machines',
@@ -1384,7 +1396,10 @@ resources
     'microsoft.keyvault/vaults',
     'microsoft.containerregistry/registries'
 )
-| extend hasZones = isnotempty(zones)
+| extend hasZones = case(
+    type =~ 'microsoft.network/loadbalancers', tostring(sku.name) =~ 'Standard',
+    isnotempty(zones)
+)
 | summarize 
     Total = count(),
     Compliant = countif(hasZones),
@@ -1415,7 +1430,10 @@ resources
     'microsoft.keyvault/vaults',
     'microsoft.containerregistry/registries'
 )
-| extend hasZones = isnotempty(zones)
+| extend hasZones = case(
+    type =~ 'microsoft.network/loadbalancers', tostring(sku.name) =~ 'Standard',
+    isnotempty(zones)
+)
 | summarize 
     TotalResources = count(),
     ZoneCompliant = countif(hasZones),
