@@ -82,8 +82,9 @@ Get-Content "ManagedIdentityFirewallDashboard.workbook" | ConvertFrom-Json | Out
 
 ## Related Files
 
+- [ManagedIdentityFirewallDashboard-KQLQueries.md](ManagedIdentityFirewallDashboard-KQLQueries.md) — All KQL queries ready to copy-paste into Azure Resource Graph Explorer
 - [ResourceGraphQueries-ManagedIdentity-Firewall.md](../ResourceGraphQueries-ManagedIdentity-Firewall.md) — Standalone KQL queries used in this workbook
 
 ---
 
-*Last Updated: March 2026*
+*Last Updated: April 2026*
